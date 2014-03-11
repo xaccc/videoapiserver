@@ -1,4 +1,8 @@
-videoapiserver
+Video API Server
 ==============
 
-video api server
+通过HTTP协议提供视频服务
+
+包括：身份验证，视频的上传，自动转码等；
+
+
