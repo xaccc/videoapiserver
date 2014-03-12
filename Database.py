@@ -1,7 +1,8 @@
 # -*- encoding: utf-8 -*-
 
+import MySQL
 
-class Database(Object):
+class Database(object):
 
 	def __init__(self):
 		self.db = MySQL({

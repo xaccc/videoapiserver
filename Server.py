@@ -1,47 +1,74 @@
 # -*- encoding: utf-8 -*-
+
+
 from datetime import date
 from urlparse import urljoin
 from urlparse import urlsplit
 from datetime import datetime
-from DBUtils.PooledDB import PooledDB
-
+from datetime import timedelta
+from Service import Service
 
 
 import os
 import uuid
 import json
 import hashlib
-import tornado.ioloop
+import httplib
 import tornado.web
+import tornado.ioloop
 import tornado.httpserver
+import dateutil
+import dateutil.tz
+import dateutil.parser
 
+
+class MyJSONEncoder(json.JSONEncoder):
+	def default(self, obj):
+		if isinstance(obj, datetime):
+			return obj.replace(tzinfo=dateutil.tz.tzlocal()).strftime('%Y-%m-%dT%H:%M:%SZ%z')
+		elif isinstance(obj, date):
+			return obj.replace(tzinfo=dateutil.tz.tzlocal()).strftime('%Y-%m-%d')
+		else:
+			return json.JSONEncoder.default(self, obj)
 
 
 class MainHandler(tornado.web.RequestHandler):
 	
 	def initialize(self, service):
 		self.service = service
-		slef.urlmap = {
-			'vaildate'			: self.vaildate,
+		self.urlmap = {
+			'validate'			: self.validate,
 			'login'				: self.login,
 			'settings'			: self.settings,
-			'videoid'			: self.vaildate,
-			'upload_progress'	: self.vaildate,
-			'upload'			: self.vaildate,
-			'share'				: self.vaildate,
-			'list'				: self.vaildate,
+			'videoid'			: self.videoid,
+			'upload_progress'	: self.upload_progress,
+			'upload'			: self.upload,
+			'share'				: self.share,
+			'list'				: self.list,
 		}
 
 	def post(self, api):
 		if 'application/json' == self.request.headers['Content-Type']:
-			self.add_header('Content-Type', 'application/json')
-			slef.urlmap.get(api, self.__responseDefault)(dict(json.loads(self.request.body)))
+			self.urlmap.get(api, self.__responseDefault)(json.loads(self.request.body))
 		else:
-			tornado.web.HTTPError(400, '数据格式不支持')
+			raise tornado.web.HTTPError(400, '数据格式不支持')
 	
 	def __responseDefault(self,data):
-		raise tornado.web.HTTPError(405, '功能不支持')
+		raise tornado.web.HTTPError(400, '功能不支持')
 
+	def __reponseJSON(self, data):
+		self.set_header('Content-Type', 'application/json')
+		self.set_header('Server', 'Video API Server')
+		self.write(json.dumps(data, cls=MyJSONEncoder))
+
+	def write_error(self, status_code, **kwargs):
+		self.__reponseJSON({'Error': status_code, 'Message': httplib.responses[status_code]})
+
+
+	#def _handle_request_exception(self, e):
+	#	self.set_header('Content-Type', 'application/json')
+	#	self.set_header('Server', 'Video API Server')
+	#	self.write({'Error': -1, 'Message': str(e)})
 
 	###########################################################################
 	#
@@ -62,7 +89,12 @@ class MainHandler(tornado.web.RequestHandler):
 			Message[string] – 返回消息，如果非零，则返回错误信息。
 			ValidityDate[date] – 验证码有效日期。
 		"""
-
+		self.__reponseJSON({
+			'Error': 0,
+			'Message': '',
+			'Now': datetime.now(),
+			'ValidityDate': datetime.now() + timedelta(seconds=90)
+			})
 		pass
 
 	def login(self, data):
@@ -79,6 +111,10 @@ class MainHandler(tornado.web.RequestHandler):
 			UserKey[string] – 用户登录后的会话ID。（用于后续功能调用）
 			NewUser[boolean] - 新用户
 		"""
+		self.__reponseJSON({
+			'Error': 0,
+			'Now': datetime.now()
+			})
 		pass
 
 
@@ -97,6 +133,10 @@ class MainHandler(tornado.web.RequestHandler):
 			Key[string] – 参数名
 			Value[string] – 参数当前设置的值
 		"""
+		self.__reponseJSON({
+			'Error': 0,
+			'Now': datetime.now(),
+			})
 		pass
 
 
@@ -113,6 +153,12 @@ class MainHandler(tornado.web.RequestHandler):
 			VID[string] – 分配的视频ID
 			Length[long] – 视频字节数，单位BYTES。
 		"""
+		self.__reponseJSON({
+			'Error': 0,
+			'Now': datetime.now(),
+			'VID': self.service.generateVideoId(data),
+			'Length': data['Length']
+			})
 		pass
 
 
@@ -130,6 +176,13 @@ class MainHandler(tornado.web.RequestHandler):
 			Saved[long] – 上传字节数，单位BYTES。
 			Length[long] – 视频字节数，单位BYTES。
 		"""
+		self.__reponseJSON({
+			'Error' : 0,
+			'Now'   : datetime.now(),
+			'VID'   : data['VID'],
+			'Length': 0,
+			'Saved' : 0,
+			})
 		pass
 
 	def upload(self, data):
@@ -148,6 +201,13 @@ class MainHandler(tornado.web.RequestHandler):
 			Saved[long] – 上传字节数，单位BYTES。
 			Length[long] – 视频字节数，单位BYTES。
 		"""
+		self.__reponseJSON({
+			'Error' : 0,
+			'Now'   : datetime.now(),
+			'VID'   : data['VID'],
+			'Length': 0,
+			'Saved' : 0,
+			})
 		pass
 
 
@@ -168,6 +228,10 @@ class MainHandler(tornado.web.RequestHandler):
 				Mobile[string] – 分享手机号
 				Signup[boolean] – 是否注册用户
 		"""
+		self.__reponseJSON({
+			'Error': 0,
+			'Now': datetime.now()
+			})
 		pass
 
 
@@ -200,6 +264,10 @@ class MainHandler(tornado.web.RequestHandler):
 				PosterURLs[array] – 视频截图URLs，JPG文件
 				VideoURLs[array] – 视频播放URLs，数量参考清晰度(清晰度+1)
 		"""
+		self.__reponseJSON({
+			'Error': 0,
+			'Now': datetime.now()
+			})
 		pass
 
 	
