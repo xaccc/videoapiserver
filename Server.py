@@ -182,7 +182,7 @@ class MainHandler(tornado.web.RequestHandler):
 		if not self.__has_params(data, ('UserKey', 'Length')):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
-		vid = self.service.generateVideoId(data)
+		vid = self.service.videoid(data)
 		self.__reponseJSON({
 			'Error': 0,
 			'Now': datetime.now(),
