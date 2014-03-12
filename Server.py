@@ -61,8 +61,22 @@ class MainHandler(tornado.web.RequestHandler):
 		self.set_header('Server', 'Video API Server')
 		self.write(json.dumps(data, cls=MyJSONEncoder))
 
+	def __has_params(self, data, params):
+		if not isinstance(data, dict):
+			return False
+		for p in params:
+			if not data.has_key(p):
+				return False
+		return True
+
 	def write_error(self, status_code, **kwargs):
-		self.__reponseJSON({'Error': status_code, 'Message': httplib.responses[status_code]})
+		data = {'Error': status_code, 'Message': httplib.responses[status_code]}
+
+		for item in kwargs['exc_info']:
+			if isinstance(item,Exception):
+				data['Message'] = str(item)
+
+		self.__reponseJSON(data)
 
 
 	#def _handle_request_exception(self, e):
@@ -89,6 +103,9 @@ class MainHandler(tornado.web.RequestHandler):
 			Message[string] – 返回消息，如果非零，则返回错误信息。
 			ValidityDate[date] – 验证码有效日期。
 		"""
+		if not self.__has_params(data, ('Mobile', 'Device')):
+			raise tornado.web.HTTPError(400, '参数Error')
+
 		self.__reponseJSON({
 			'Error': 0,
 			'Message': '',
@@ -96,6 +113,8 @@ class MainHandler(tornado.web.RequestHandler):
 			'ValidityDate': datetime.now() + timedelta(seconds=90)
 			})
 		pass
+
+
 
 	def login(self, data):
 		"""
@@ -111,6 +130,9 @@ class MainHandler(tornado.web.RequestHandler):
 			UserKey[string] – 用户登录后的会话ID。（用于后续功能调用）
 			NewUser[boolean] - 新用户
 		"""
+		if not self.__has_params(data, ('Mobile', 'Validate')):
+			raise tornado.web.HTTPError(400, '参数Error')
+
 		self.__reponseJSON({
 			'Error': 0,
 			'Now': datetime.now()
@@ -133,11 +155,15 @@ class MainHandler(tornado.web.RequestHandler):
 			Key[string] – 参数名
 			Value[string] – 参数当前设置的值
 		"""
+		if not self.__has_params(data, ('UserKey', 'Key')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
 		self.__reponseJSON({
 			'Error': 0,
 			'Now': datetime.now(),
 			})
 		pass
+
 
 
 	def videoid(self, data):
@@ -153,10 +179,14 @@ class MainHandler(tornado.web.RequestHandler):
 			VID[string] – 分配的视频ID
 			Length[long] – 视频字节数，单位BYTES。
 		"""
+		if not self.__has_params(data, ('UserKey', 'Length')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		vid = self.service.generateVideoId(data)
 		self.__reponseJSON({
 			'Error': 0,
 			'Now': datetime.now(),
-			'VID': self.service.generateVideoId(data),
+			'VID': vid,
 			'Length': data['Length']
 			})
 		pass
@@ -176,12 +206,16 @@ class MainHandler(tornado.web.RequestHandler):
 			Saved[long] – 上传字节数，单位BYTES。
 			Length[long] – 视频字节数，单位BYTES。
 		"""
+		if not self.__has_params(data, ('UserKey', 'VID')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		length, saved = self.service.upload_progress(data)
 		self.__reponseJSON({
 			'Error' : 0,
 			'Now'   : datetime.now(),
 			'VID'   : data['VID'],
-			'Length': 0,
-			'Saved' : 0,
+			'Length': length,
+			'Saved' : saved,
 			})
 		pass
 
@@ -201,14 +235,19 @@ class MainHandler(tornado.web.RequestHandler):
 			Saved[long] – 上传字节数，单位BYTES。
 			Length[long] – 视频字节数，单位BYTES。
 		"""
+		if not self.__has_params(data, ('UserKey', 'VID', 'Offset', 'Data', 'Size')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		length, saved = self.service.upload(data)
 		self.__reponseJSON({
 			'Error' : 0,
 			'Now'   : datetime.now(),
 			'VID'   : data['VID'],
-			'Length': 0,
-			'Saved' : 0,
+			'Length': length,
+			'Saved' : saved,
 			})
 		pass
+
 
 
 	def share(self, data):
@@ -228,6 +267,9 @@ class MainHandler(tornado.web.RequestHandler):
 				Mobile[string] – 分享手机号
 				Signup[boolean] – 是否注册用户
 		"""
+		if not self.__has_params(data, ('UserKey', 'VID', 'To')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
 		self.__reponseJSON({
 			'Error': 0,
 			'Now': datetime.now()
@@ -264,6 +306,9 @@ class MainHandler(tornado.web.RequestHandler):
 				PosterURLs[array] – 视频截图URLs，JPG文件
 				VideoURLs[array] – 视频播放URLs，数量参考清晰度(清晰度+1)
 		"""
+		if not self.__has_params(data, ('UserKey', 'Offset', 'Max')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
 		self.__reponseJSON({
 			'Error': 0,
 			'Now': datetime.now()
@@ -288,4 +333,4 @@ def startup(port, host='0.0.0.0'):
 
 
 if __name__ == "__main__":
-	startup(9000)
+	startup(9001)
