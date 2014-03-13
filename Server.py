@@ -6,12 +6,16 @@ from urlparse import urljoin
 from urlparse import urlsplit
 from datetime import datetime
 from datetime import timedelta
-from Service import Service
+from ConfigParser import ConfigParser
 
+from Service import Service
 
 import os
 import uuid
 import json
+import time
+import signal
+import logging
 import hashlib
 import httplib
 import tornado.web
@@ -42,7 +46,7 @@ class MainHandler(tornado.web.RequestHandler):
 			'settings'			: self.settings,
 			'videoid'			: self.videoid,
 			'upload_progress'	: self.upload_progress,
-			'upload'			: self.upload,
+			'upload'				: self.upload,
 			'share'				: self.share,
 			'list'				: self.list,
 		}
@@ -315,22 +319,67 @@ class MainHandler(tornado.web.RequestHandler):
 			})
 		pass
 
-	
 
-def startup(port, host='0.0.0.0'):
+
+
+
+
+
+def sig_handler(sig, frame):
+	logging.warning('Caught signal: %s', sig)
+	tornado.ioloop.IOLoop.instance().add_callback(shutdown)
+
+MAX_WAIT_SECONDS_BEFORE_SHUTDOWN = 3
+
+def shutdown():
+	logging.info('Stopping http server')
+	http_server.stop()
+
+	logging.info('Will shutdown in %s seconds ...', MAX_WAIT_SECONDS_BEFORE_SHUTDOWN)
+	io_loop = tornado.ioloop.IOLoop.instance()
+
+	deadline = time.time() + MAX_WAIT_SECONDS_BEFORE_SHUTDOWN
+
+	def stop_loop():
+		now = time.time()
+		if now < deadline and (io_loop._callbacks or io_loop._timeouts):
+			io_loop.add_timeout(now + 1, stop_loop)
+		else:
+			io_loop.stop()
+			logging.info('Shutdown')
+
+	stop_loop()
+
+
+def startup(applicationConfig):
+
+	host = applicationConfig.get('Server','IP')
+	port = applicationConfig.getint('Server','Listen')
 	
-	service = Service()
+	signal.signal(signal.SIGTERM, sig_handler)
+	signal.signal(signal.SIGINT, sig_handler)
+
+	pid = os.getpid()
+
+	f = open('server.pid', 'wb')
+	f.write(str(pid))
+	f.close()
+
+	service = Service(applicationConfig)
 	
 	application = tornado.web.Application([
 		(r"/api/(.*)", MainHandler, dict(service=service)),
 	])
-										   
-	print "Startup server on %s:%d ..." % (host,port)
+
+	global http_server
+	print "Startup server on %s:%d, PID:%d ..." % (host,port,pid)
 	http_server = tornado.httpserver.HTTPServer(application)
 	http_server.bind(port, host)
-	http_server.start(num_processes=0) # tornado将按照cpu核数来fork进程
-	tornado.ioloop.IOLoop.instance().start()	
+	http_server.start(num_processes = applicationConfig.getint('Server','NumProcesses')) # tornado将按照cpu核数来fork进程
+	tornado.ioloop.IOLoop.instance().start()
 
 
 if __name__ == "__main__":
-	startup(9001)
+	applicationConfig = ConfigParser()
+	applicationConfig.read('Config.ini')
+	startup(applicationConfig)

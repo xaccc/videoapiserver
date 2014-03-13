@@ -7,12 +7,16 @@ import uuid
 import urllib2
 import base64
 
+from ConfigParser import ConfigParser
+
+baseurl = 'http://221.180.20.232:9001/api'
+
 
 def generateId():
 	return str(uuid.uuid4()).replace('-','')
 
 def getUploadSession(length):
-	req = urllib2.Request('http://localhost:9001/api/videoid')
+	req = urllib2.Request(baseurl + '/videoid')
 	req.add_header('Content-Type', 'application/json')
 
 	content = ''
@@ -30,7 +34,7 @@ def getUploadSession(length):
 
 
 def getUploadProgress(id):
-	req = urllib2.Request('http://localhost:9001/api/upload_progress')
+	req = urllib2.Request(baseurl + '/upload_progress')
 	req.add_header('Content-Type', 'application/json')
 
 	content = ''
@@ -48,7 +52,7 @@ def getUploadProgress(id):
 
 
 def postData(id, length, offset, bdata):
-	req = urllib2.Request('http://localhost:9001/api/upload')
+	req = urllib2.Request(baseurl + '/upload')
 	req.add_header('Content-Type', 'application/json')
 
 	try:
@@ -68,7 +72,10 @@ def postData(id, length, offset, bdata):
 	return None
 
 
-print sys.argv
+applicationConfig = ConfigParser()
+applicationConfig.read('Config.ini')
+baseurl = applicationConfig.get('Test', 'Baseurl')
+print baseurl
 if len(sys.argv) > 1:
 	buffer_size = 1024
 	if len(sys.argv) > 2:

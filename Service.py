@@ -3,12 +3,17 @@
 from datetime import datetime
 from MySQL import MySQL
 
+import os
 import uuid
 import base64
 
 class Service(object):
 
-	def __init__(self):
+	def __init__(self,config):
+		self.applicationConfig = config
+		self.uploadDirectory = self.applicationConfig.get('Server','Upload')
+		if not os.path.exists(self.uploadDirectory):
+			os.makedirs(self.uploadDirectory)
 		pass
 
 	def __del__(self):
@@ -16,11 +21,11 @@ class Service(object):
 
 	def __getDB(self):
 		return MySQL({
-					'host'	: 'localhost',
-					'port'	: 3306,
-					'user'	: 'root',
-					'passwd'	: '1q2w3e',
-					'db'		: 'videos'})
+					'host'	: self.applicationConfig.get('Database','Host'),
+					'port'	: self.applicationConfig.getint('Database','Port'),
+					'user'	: self.applicationConfig.get('Database','User'),
+					'passwd'	: self.applicationConfig.get('Database','Passwd'),
+					'db'		: self.applicationConfig.get('Database','Database')})
 	
 	def getUserId(self,userKey):
 		"""
@@ -179,12 +184,14 @@ class Service(object):
 		if length > 0 and offset != uploadSession['saved']:
 			raise Exception("Upload data don't sync.")
 
-		if db.update("UPDATE `upload` SET `saved` = %s WHERE `id` = %s", (saved, data['VID'])) != 1:
+		if db.update("UPDATE `upload` SET `saved` = %s, `update_time` = now() WHERE `id` = %s", (saved, data['VID'])) != 1:
 			raise Exception("Write database error.")
 
 		db.end()
 
-		f = open(data['VID'], 'ab')
+		fileName = self.uploadDirectory + '/' + data['VID']
+
+		f = open(fileName, 'ab')
 		f.write(bindata)
 		f.close()
 

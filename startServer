@@ -1,0 +1,3 @@
+#!/bin/sh
+
+nohup python Server.py >> server.log 2>&1 &
