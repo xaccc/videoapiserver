@@ -234,6 +234,7 @@ class MainHandler(tornado.web.RequestHandler):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
 		length, saved = self.service.upload(data)
+
 		self.__reponseJSON({
 			'Now'   : datetime.now(),
 			'VID'   : data['VID'],

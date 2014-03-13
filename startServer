@@ -1,3 +1,9 @@
 #!/bin/sh
 
 nohup python Server.py >> server.log 2>&1 &
+sleep 1
+if [ -f 'server.pid' ]; then
+  echo Server PID: `cat server.pid`
+else
+  echo start server faild!
+fi

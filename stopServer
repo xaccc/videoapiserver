@@ -4,4 +4,5 @@ for pid in `ps aux|grep 'python Server.py'|grep -v grep|awk '{print $2}'`; do
   kill -9 $pid
 done
 
+rm -f server.pid
 

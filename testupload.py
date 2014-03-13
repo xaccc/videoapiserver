@@ -15,61 +15,49 @@ baseurl = 'http://127.0.0.1:9001/api'
 def generateId():
 	return str(uuid.uuid4()).replace('-','')
 
-def getUploadSession(length):
-	req = urllib2.Request(baseurl + '/videoid')
+
+def postJSON(url,data):
+	req = urllib2.Request(url)
 	req.add_header('Content-Type', 'application/json')
 
 	content = ''
 	try:
-		response = urllib2.urlopen(req, json.dumps({
-			'UserKey'	: generateId(),
-			'Length'		: length,
-			}))
+		response = urllib2.urlopen(req, json.dumps(data))
 		content = response.read()
-
+		return json.loads(content)
 	except Exception, e:
 		print e
+	
+	return None
 
-	return json.loads(content)
+def uploadSession(length):
+	return postJSON(baseurl + '/videoid', {
+			'UserKey'	: generateId(),
+			'Length'	: length,
+			})
 
 
-def getUploadProgress(id):
-	req = urllib2.Request(baseurl + '/upload_progress')
-	req.add_header('Content-Type', 'application/json')
-
-	content = ''
-	try:
-		response = urllib2.urlopen(req, json.dumps({
+def uploadProgress(id):
+	return postJSON(baseurl + '/upload_progress', {
 			'UserKey'	: generateId(),
 			'VID'		: id,
-			}))
-		content = response.read()
+			})
 
-	except Exception, e:
-		print e
+def getVideo(id):
+	return postJSON(baseurl + '/getvideo', {
+			'UserKey'	: generateId(),
+			'VID'		: id,
+			})
 
-	return json.loads(content)
-
-
-def postData(id, length, offset, bdata):
-	req = urllib2.Request(baseurl + '/upload')
-	req.add_header('Content-Type', 'application/json')
-
-	try:
-		response = urllib2.urlopen(req, json.dumps({
+def upload(id, length, offset, bdata):
+	return postJSON(baseurl + '/upload', {
 			'UserKey'	: id,
 			'VID'		: id,
-			'Length'		: length,
-			'Offset'		: offset,
+			'Length'	: length,
+			'Offset'	: offset,
 			'Size'		: len(bdata),
 			'Data'		: base64.b64encode(bdata),
-			}))
-
-		return json.loads(response.read())
-	except Exception, e:
-		print e
-
-	return None
+			})
 
 
 applicationConfig = ConfigParser()
@@ -77,13 +65,14 @@ applicationConfig.read('Config.ini')
 baseurl = applicationConfig.get('Test', 'Baseurl')
 print baseurl
 if len(sys.argv) > 1:
-	buffer_size = 1024
+	buffer_size = 1024*100
 	if len(sys.argv) > 2:
 		buffer_size = int(sys.argv[2])
 	filename = sys.argv[1]
 	fsize = os.path.getsize(filename)
-	session = getUploadSession(fsize)
+	session = uploadSession(fsize)
 	print session
+
 	f = open(filename, 'rb')
 	offset = 0L
 	id = session['VID']
@@ -93,10 +82,15 @@ if len(sys.argv) > 1:
 		if bdata is None or len(bdata) == 0:
 			break;
 
-		postData(id, fsize, offset, bdata)
+		upload(id, fsize, offset, bdata)
 		offset += len(bdata)
 
-		p = getUploadProgress(id)
+		p = uploadProgress(id)
 		print str(int(p['Saved'] * 100 / p['Length'])) + '%'
+
+		if p['Saved'] == p['Length']:
+			print 'Upload complete!'
+			print json.dumps(getVideo(id),sort_keys=True,indent=4)
+
 else:
 	print "Usage: %s <uploadfile> [<buffer_size>]" % sys.argv[0]
