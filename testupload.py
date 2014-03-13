@@ -9,7 +9,7 @@ import base64
 
 from ConfigParser import ConfigParser
 
-baseurl = 'http://221.180.20.232:9001/api'
+baseurl = 'http://127.0.0.1:9001/api'
 
 
 def generateId():

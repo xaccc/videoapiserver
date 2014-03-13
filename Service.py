@@ -6,6 +6,7 @@ from MySQL import MySQL
 import os
 import uuid
 import base64
+import multiprocessing
 
 class Service(object):
 
@@ -198,6 +199,52 @@ class Service(object):
 		return length,saved
 
 
+
+
+	def setvideo(self, data):
+		"""
+		设置视频信息
+		方法：
+			setvideo
+		参数：
+			UserKey[string] –用户登录后的会话ID。
+			VID[string] – 分配的视频ID
+			Title[string] – 视频标题
+			Author[string] – 分享者/创作者名称
+			CreateTime[date] – 创作日期
+			Category[string] – 视频分类
+			Tag[string] – 视频标签，标签内容有半角“,”（逗号）分割
+		返回值：
+			VID[string] – 视频ID
+		"""
+		pass
+
+
+	def getvideo(self, data):
+		"""
+		获取视频信息
+		方法：
+			getvideo
+		参数：
+			UserKey[string] –用户登录后的会话ID。
+			VID[string] – 分配的视频ID
+		返回值：
+			VID[string] – 视频ID
+			Owner[string] – 视频所有者，默认为视频上传/分享者的手机号
+			Title[string] – 视频标题
+			Author[string] – 分享者/创作者名称
+			CreateTime[date] – 创作日期
+			Category[string] – 视频分类
+			Tag[string] – 视频标签，标签内容有半角“,”（逗号）分割
+			Duration[long] – 视频长度
+			Definition[long] – 视频清晰度： 0:流畅，1:标清，2:高清，3:超清
+			PosterURLs[array] – 视频截图URLs，JPG文件，1~5个。
+			VideoURLs[array] – 视频播放URLs，数量参考清晰度(清晰度+1)
+		"""
+		pass
+
+
+
 	def share(self, data):
 		"""
 		分享视频
@@ -249,4 +296,29 @@ class Service(object):
 		"""
 		pass
 
-	
+
+
+class Transcoder(object):
+	stoped = multiprocessing.Event()
+
+	def __init__(self):
+		pass
+
+	def __del__(self):
+		pass
+
+	def __run(event):
+		while not event.is_set():
+			# transcode
+			pass
+
+		pass
+
+	def start():
+		pass
+
+	def stop():
+		pass
+
+	def task(vid):
+		pass
