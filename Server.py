@@ -46,7 +46,9 @@ class MainHandler(tornado.web.RequestHandler):
 			'settings'			: self.settings,
 			'videoid'			: self.videoid,
 			'upload_progress'	: self.upload_progress,
-			'upload'				: self.upload,
+			'upload'			: self.upload,
+			'setvideo'			: self.setvideo,
+			'getvideo'			: self.getvideo,
 			'share'				: self.share,
 			'list'				: self.list,
 		}
@@ -103,8 +105,6 @@ class MainHandler(tornado.web.RequestHandler):
 			Mobile[string] – 用户手机号码
 			Device[string] – 设备名称
 		返回值：
-			Error[long] – 发送成功返回0，否则返回非零值。
-			Message[string] – 返回消息，如果非零，则返回错误信息。
 			ValidityDate[date] – 验证码有效日期。
 		"""
 		if not self.__has_params(data, ('Mobile', 'Device')):
@@ -127,8 +127,6 @@ class MainHandler(tornado.web.RequestHandler):
 			Mobile[string] – 用户手机号码
 			Validate[string] – 验证码（通过调用vaildate接口下发的验证码，由用户输入）
 		返回值：
-			Error[long] – 发送成功返回0，否则返回非零值。
-			Message[string] – 返回消息，如果非零，则返回错误信息。
 			UserKey[string] – 用户登录后的会话ID。（用于后续功能调用）
 			NewUser[boolean] - 新用户
 		"""
@@ -153,7 +151,6 @@ class MainHandler(tornado.web.RequestHandler):
 			Key[string] – 参数名
 			Value[string] – 参数值，可选参数，如果没有该参数，则返回指定参数名的当前值
 		返回值：
-			Error[long] – 发送成功返回0，否则返回非零值。
 			Key[string] – 参数名
 			Value[string] – 参数当前设置的值
 		"""
@@ -176,14 +173,13 @@ class MainHandler(tornado.web.RequestHandler):
 			UserKey[string] –用户登录后的会话ID。
 			Length[long] –视频字节数，单位BYTES。
 		返回值：
-			Error[long] – 发送成功返回0，否则返回非零值。
 			VID[string] – 分配的视频ID
 			Length[long] – 视频字节数，单位BYTES。
 		"""
 		if not self.__has_params(data, ('UserKey', 'Length')):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
-		vid = self.service.videoid(data)
+		vid = self.service.uploadid(data)
 		self.__reponseJSON({
 			'Now': datetime.now(),
 			'VID': vid,
@@ -247,8 +243,6 @@ class MainHandler(tornado.web.RequestHandler):
 		pass
 
 
-
-
 	def setvideo(self, data):
 		"""
 		设置视频信息
@@ -298,10 +292,25 @@ class MainHandler(tornado.web.RequestHandler):
 		if not self.__has_params(data, ('UserKey', 'VID')):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
+		videoInstance = self.service.getvideo(data)
+		if videoInstance == None:
+			raise tornado.web.HTTPError(404, '视频不存在')
+
 		self.__reponseJSON({
-			'Now': datetime.now()
+			'Now'   	: datetime.now(),
+			'VID'   	: data['VID'],
+			'Owner' 	: videoInstance['Owner'],
+			'Title' 	: videoInstance['Title'],
+			'Author' 	: videoInstance['Author'],
+			'CreateTime': videoInstance['CreateTime'],
+			'Category' 	: videoInstance['Category'],
+			'Tag' 		: videoInstance['Tag'],
+			'Duration' 	: videoInstance['Duration'],
+			'Definition': videoInstance['Definition'],
+			'PosterURLs': videoInstance['PosterURLs'],
+			'VideoURLs'	: videoInstance['VideoURLs'],
 			})
-		pass
+
 
 
 

@@ -4,7 +4,9 @@ from datetime import datetime
 from MySQL import MySQL
 
 import os
+import commands
 import uuid
+import json
 import base64
 import multiprocessing
 
@@ -40,6 +42,18 @@ class Service(object):
 		"""
 		#db = self.__getDB()
 		return 'aaaabbbbccccddddeeee04b6ada88888'
+
+	def getUserMobile(self, userId):
+		"""
+		获取用户手机号
+		方法：
+			getUserMobile
+		参数：
+			userId[string] – 用户ID。参考 getUserId
+		返回值：
+			[string] – 手机号
+		"""
+		return '18636636365'
 
 
 	def generateId(self):
@@ -100,9 +114,9 @@ class Service(object):
 		pass
 
 
-	def videoid(self, data):
+	def uploadid(self, data):
 		"""
-		分配视频ID
+		分配上传ID
 		方法：
 			videoid
 		参数：
@@ -190,15 +204,34 @@ class Service(object):
 
 		db.end()
 
-		fileName = self.uploadDirectory + '/' + data['VID']
+		fileName = "%s/%s" % (self.uploadDirectory, data['VID'])
 
 		f = open(fileName, 'ab')
 		f.write(bindata)
 		f.close()
 
+		if length == saved:
+			"上传完成，进行相应处理"
+			self.saveVideo({
+				'UserKey': data['UserKey'],
+				'VID'	 : data['VID'],
+				})
+			
+
 		return length,saved
 
+	def saveVideo(self,data):
+		userId = self.getUserId(data['UserKey'])
+		db = self.__getDB()
+		newId = self.generateId()
+		
+		result = db.save("""INSERT INTO `video` (`id`, `upload_id`, `owner_id`, `saved`, `update_time`) VALUES (%s,%s,%s,%s,%s)"""
+					, (newId, userId, data['Length'], 0L, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+		db.end()
 
+		fileName = "%s/%s" % (self.uploadDirectory, data['VID'])
+		media = MediaProbe(fileName)
+		pass
 
 
 	def setvideo(self, data):
@@ -241,7 +274,28 @@ class Service(object):
 			PosterURLs[array] – 视频截图URLs，JPG文件，1~5个。
 			VideoURLs[array] – 视频播放URLs，数量参考清晰度(清晰度+1)
 		"""
-		pass
+		userId = self.getUserId(data['UserKey'])
+		db = self.__getDB()
+		videoInstance = db.get('SELECT * FROM `video` WHERE `upload_id` = %s', (data['VID']))
+		if not videoInstance:
+			#videoInstance['video_bitrate']
+			#videoInstance['video_height']
+			return {
+				'VID'   	: videoInstance['upload_id'],
+				'Owner' 	: self.getUserMobile(videoInstance['owner_id']),
+				'Title' 	: videoInstance['title'],
+				'Author' 	: videoInstance['author'],
+				'CreateTime': videoInstance['create_date'],
+				'Category' 	: videoInstance['category'],
+				'Describe' 	: videoInstance['describe'],
+				'Tag' 		: '',
+				'Duration' 	: videoInstance['duration'],
+				'Definition': MediaProbe.Definition(videoInstance['video_height']),
+				'PosterURLs': '',
+				'VideoURLs'	: '',
+			}
+
+		return None
 
 
 
@@ -298,7 +352,111 @@ class Service(object):
 
 
 
+
+class MediaProbe(object):
+	"""
+	调用依赖的程序分析媒体文件的信息
+	"""
+
+	definitionName = ('流畅','标清','高清','超清','4K')
+
+	def __init__(self, fileName):
+		code, text = commands.getstatusoutput('avprobe -v 0 -of json -show_format -show_streams "%s"' % fileName)
+		if code == 0:
+			self.probe = json.loads(text)
+			self.format = self.probe['format']
+			self.videoStream = self.__stream('video')
+			self.audioStream = self.__stream('audio')
+
+		else:
+			raise Exception('不支持的媒体文件，或未找到依赖的程序')
+
+
+	def __stream(self, typeName):
+		if self.probe['streams']:
+			for stream in self.probe['streams']:
+				if stream['codec_type'] == typeName:
+					return stream
+
+		return None
+
+	def __get(self, stream, key):
+		if stream == None:
+			return None
+		if not stream.has_key(key):
+			return ''
+		return stream[key]
+	def __getFloat(self, stream, key)
+		if stream == None:
+			return None
+		if not stream.has_key(key):
+			return 0.0
+		return float(stream[key])
+	def __getLong(self, stream, key)
+		if stream == None:
+			return None
+		if not stream.has_key(key):
+			return 0L
+		return long(float(stream[key]))
+	def __getInt(self, stream, key)
+		if stream == None:
+			return None
+		if not stream.has_key(key):
+			return 0L
+		return long(float(stream[key]))
+	def hasVideo(self):
+		if self.videoStream == None:
+			return False
+		return True
+	def hasAudio(self):
+		if self.audioStream == None:
+			return False
+		return True
+	def videoBitrate(self):
+		return self.__getInt(self.videoStream, 'bit_rate')
+	def audioBitrate(self):
+		return self.__getInt(self.audioStream, 'bit_rate')
+	def videoCodec(self):
+		return self.__get(self.videoStream, 'codec_name')
+	def audioCodec(self):
+		return self.__get(self.audioStream, 'codec_name')
+	def videoWidth(self):
+		return self.__getInt(self.videoStream, 'width')
+	def videoHeight(self):
+		return self.__getInt(self.videoStream, 'height')
+	def videoDefinition(self):
+		return MediaProbe.Definition(videoHeight)
+
+	def Definition(height, width= 0):
+		"""
+		获取视频清晰度：0-流畅，1-标清，2-高清，3-超清，4-4K
+		"""
+		if height >= 2160:
+			return 4
+		elif height >= 1080:
+			return 3
+		elif height >= 720:
+			return 2
+		elif height >= 480:
+			return 1
+		elif height >= 90:
+			return 0
+		return -1
+
+	def DefinitionName(height, width= 0):
+		x = MediaProbe.Definition(height, width)
+		if x >= 0 and x < len(MediaProbe.definitionName):
+			return MediaProbe.definitionName[x]
+		return '未知清晰度'
+
+
+
+
 class Transcoder(object):
+	"""
+	媒体转码功能封装
+	"""
+
 	stoped = multiprocessing.Event()
 
 	def __init__(self):
@@ -322,3 +480,30 @@ class Transcoder(object):
 
 	def task(vid):
 		pass
+
+	def videoProbe(fileName):
+		code, text = commands.getstatusoutput('avprobe -v 0 -of json -show_format -show_streams "%s"' % fileName)
+		if code != 0:
+			return None
+		return json.loads(text)
+
+	def videoTransform(fileName, destFileName, transcode=False):
+		"""
+		从上传位置转移到视频位置，并根据需要进行转码
+		"""
+		if transcode:
+			probe = self.videoProbe(fileName)
+			videoBitrate = 0
+			audioBitrate = 0
+			code, text = commands.getstatusoutput('avconv -v 0 -i "%s" -vcodec libx264 -b:v %d -acodec aac -strict -2 -b:a %d -y -f mp4 "%s"' % (fileName, videoBitrate, audioBitrate, destFileName))
+		else:
+			code, text = commands.getstatusoutput('avconv -v 0 -i "%s" -vcodec copy -acodec copy -y -f mp4 "%s"' % (fileName, destFileName))
+
+		if code != 0:
+			return False
+
+		return True
+
+	def videoGenPoster(fileName):
+		pass
+

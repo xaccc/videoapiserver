@@ -34,5 +34,8 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
 *.log
 *.tar.gz
+.DS_Store
+
