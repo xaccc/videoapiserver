@@ -1,14 +1,17 @@
-# -*- encoding: utf-8 -*-
+#coding=utf-8
+#-*- encoding: utf-8 -*-
 
 from datetime import datetime
 from MySQL import MySQL
+from MediaProbe import MediaProbe
+from Transcoder import Transcoder
 
 import os
 import commands
 import uuid
 import json
 import base64
-import multiprocessing
+
 
 class Service(object):
 
@@ -16,10 +19,7 @@ class Service(object):
 		self.applicationConfig = config
 		self.uploadDirectory = self.applicationConfig.get('Server','Upload')
 		self.videoDirectory = self.applicationConfig.get('Video','SavePath')
-		if not os.path.exists(self.uploadDirectory):
-			os.makedirs(self.uploadDirectory)
-		if not os.path.exists(self.videoDirectory):
-			os.makedirs(self.videoDirectory)
+
 
 	def __del__(self):
 		pass
@@ -205,6 +205,11 @@ class Service(object):
 			raise Exception("Write database error.")
 		db.end()
 
+		# auto create directory
+		if not os.path.exists(self.uploadDirectory):
+			os.makedirs(self.uploadDirectory)
+
+
 		fileName = "%s/%s" % (self.uploadDirectory, data['VID'])
 
 		f = open(fileName, 'ab')
@@ -214,33 +219,48 @@ class Service(object):
 		if length == saved:
 			# 上传完成，进行相应处理
 			print "上传完成，进行相应处理 ..."
-			destFileName = "%s/%s.mp4" % (self.videoDirectory, data['VID'])
-			if Transcoder.videoTransform(fileName, destFileName) == True:
-				self.createVideo({
-					'UserKey': data['UserKey'],
-					'VID'	 : data['VID'],
-					})
-				os.remove(fileName)
+			self.createVideo({
+				'UserKey': data['UserKey'],
+				'VID'	 : data['VID'],
+				})
 			print "done!"
 			
 
 		return length,saved
 
 	def createVideo(self,data):
+		"""
+		创建视频信息
+		方法：
+			createVideo
+		参数：
+			UserKey[string] –用户登录后的会话ID。
+			VID[string] – 分配的视频ID
+		返回值：
+			[boolean] – 是否成功创建
+		"""
 		userId = self.getUserId(data['UserKey'])
-		newId = self.generateId()
-		db = self.__getDB()
 
-		try:
-			fileName = "%s/%s" % (self.uploadDirectory, data['VID'])
+		# auto create directory
+		if not os.path.exists(self.videoDirectory):
+			os.makedirs(self.videoDirectory)
+
+		fileName = "%s/%s" % (self.uploadDirectory, data['VID'])
+		destFileName = "%s/%s.mp4" % (self.videoDirectory, data['VID'])
+
+		if Transcoder.videoTransform(fileName, destFileName) == True:
+			db = self.__getDB()
+			newId = self.generateId()
 			media = MediaProbe(fileName)
+
+			# media.createTime()
 			result = db.save("""INSERT INTO `video` (`id`, `upload_id`, `owner_id`, `duration`, `video_width`, `video_height`, `video_bitrate`) VALUES (%s,%s,%s,%s,%s,%s,%s)""",
 							(newId, data['VID'], userId, media.duration(), media.videoWidth(), media.videoHeight(), media.videoBitrate()))
 			db.end()
-		except Exception as e:
-			print str(e)
-			pass
-		pass
+			os.remove(fileName)
+			return True
+			
+		return False
 
 
 	def setvideo(self, data):
@@ -370,182 +390,6 @@ class Service(object):
 		pass
 
 
-class MediaProbe(object):
-	"""
-	调用依赖的程序分析媒体文件的信息
-	"""
-
-	definitionName = ('流畅','标清','高清','超清','4K')
-
-	def __init__(self, fileName):
-		code, text = commands.getstatusoutput('avprobe -v 0 -of json -show_format -show_streams "%s"' % fileName)
-		if code == 0:
-			self.probe = json.loads(text)
-			self.format = self.probe['format']
-			self.videoStream = self.__stream('video')
-			self.audioStream = self.__stream('audio')
-
-		else:
-			raise Exception('不支持的媒体文件，或未找到依赖的程序')
-
-
-	def __stream(self, typeName):
-		if self.probe['streams']:
-			for stream in self.probe['streams']:
-				if stream['codec_type'] == typeName:
-					return stream
-
-		return None
-
-	def __get(self, stream, key):
-		if stream == None:
-			return None
-		if not stream.has_key(key):
-			return ''
-		return stream[key]
-	def __getFloat(self, stream, key):
-		if stream == None:
-			return None
-		if not stream.has_key(key):
-			return 0.0
-		return float(stream[key])
-	def __getLong(self, stream, key):
-		if stream == None:
-			return None
-		if not stream.has_key(key):
-			return 0L
-		return long(float(stream[key]))
-	def __getInt(self, stream, key):
-		if stream == None:
-			return None
-		if not stream.has_key(key):
-			return 0L
-		return long(float(stream[key]))
-	def hasVideo(self):
-		if self.videoStream == None:
-			return False
-		return True
-	def hasAudio(self):
-		if self.audioStream == None:
-			return False
-		return True
-	def videoBitrate(self):
-		return self.__getInt(self.videoStream, 'bit_rate')
-	def audioBitrate(self):
-		return self.__getInt(self.audioStream, 'bit_rate')
-	def videoCodec(self):
-		return self.__get(self.videoStream, 'codec_name')
-	def audioCodec(self):
-		return self.__get(self.audioStream, 'codec_name')
-	def videoWidth(self):
-		return self.__getInt(self.videoStream, 'width')
-	def videoHeight(self):
-		return self.__getInt(self.videoStream, 'height')
-	def videoDefinition(self):
-		return MediaProbe.definition(videoHeight)
-
-	def duration(self):
-		return self.__getFloat(self.videoStream, 'duration')
-
-	@staticmethod
-	def definition(height, width= 0):
-		"""
-		获取视频清晰度：0-流畅，1-标清，2-高清，3-超清，4-4K
-		"""
-		if height >= 2160:
-			return 4
-		elif height >= 1080:
-			return 3
-		elif height >= 720:
-			return 2
-		elif height >= 480:
-			return 1
-		elif height >= 90:
-			return 0
-		return -1
-
-	@staticmethod
-	def definitionName(height, width= 0):
-		x = MediaProbe.definition(height, width)
-		if x >= 0 and x < len(MediaProbe.definitionName):
-			return MediaProbe.definitionName[x]
-		return '未知清晰度'
 
 
 
-
-class Transcoder(object):
-	"""
-	媒体转码功能封装
-	"""
-
-	stoped = multiprocessing.Event()
-
-	def __init__(self):
-		pass
-
-	def __del__(self):
-		pass
-
-	def __run(event):
-		while not event.is_set():
-			# transcode
-			pass
-
-		pass
-
-	@staticmethod
-	def start():
-		pass
-
-	@staticmethod
-	def stop():
-		pass
-
-	@staticmethod
-	def task(vid):
-		pass
-
-	@staticmethod
-	def videoGeneratePoster(fileName):
-		try:
-			destFileName, fileExtension = os.path.splitext(fileName)
-			media = MediaProbe(fileName)
-			duration = int(media.duration())
-			for i in range(0,5):
-				ss = duration * i / 5
-				code, text = commands.getstatusoutput('avconv -ss %d -i %s -vframes 1 -y "%s"' % (ss, fileName, "%s_%d.jpg" % (destFileName,i+1)))
-				if code != 0:
-					return False
-
-			return True
-		except Exception as e:
-			return False
-
-		pass
-
-	@staticmethod
-	def videoTransform(fileName, destFileName):
-		"""
-		从上传位置转移到视频位置，并根据需要进行转码
-		"""
-		try:
-			media = MediaProbe(fileName)
-			if media.videoCodec() != 'h264' or media.audioCodec() != 'aac':
-				videoBitrate = media.videoBitrate()
-				audioBitrate = media.audioBitrate()
-				code, text = commands.getstatusoutput('avconv -v 0 -i "%s" -vcodec libx264 -b:v %d -acodec aac -strict -2 -b:a %d -y "%s"' % (fileName, videoBitrate, audioBitrate, destFileName))
-			else:
-				code, text = commands.getstatusoutput('avconv -v 0 -i "%s" -vcodec copy -acodec copy -y "%s"' % (fileName, destFileName))
-
-			if code != 0:
-				return False
-
-			return Transcoder.videoGeneratePoster(destFileName)
-
-			return True
-		except Exception as e:
-			return False
-
-if __name__ == "__main__":
-	print Transcoder.videoTransform('./uploads/fc5540020456446a8cf341f141260fe1', './videos/fc5540020456446a8cf341f141260fe1.mp4')

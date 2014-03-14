@@ -1,4 +1,5 @@
-# -*- encoding: utf-8 -*-
+#coding=utf-8
+#-*- encoding: utf-8 -*-
 """
 desc:数据库操作类
 @note:
