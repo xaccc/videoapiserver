@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>视频分享</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5 maximum-scale=1.0">
+
+	<script src="//libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+	<link rel="stylesheet" href="./css/styles.css" />
+
+</head>
+<body>
+<div class="body">
+	<div class="header pertty-bk">视频分享</div>
+	<div class="background">
+		<div class="wrapper">
+			<p class="info">为获得更好的体验、更全的功能，建议您<a href="#">下载客户端</a></p>
+		</div>
+	</div>
+	<div class="footer pertty-bk"><p>中国移动通信集团山西有限公司</p><p>无线城市[晋ICP备11002219]</p></div>
+</div>
+<script>
+$(document).ready(function(){
+	var src = '';
+	var poster = '';
+	var match = /\?id=([0-9a-f]*)/.exec(location.href);
+	if (match != null) {
+		console.log(match[1]);
+		src = '/vshare/videos/' + match[1] + '.mp4';
+		poster = '/vshare/videos/' + match[1] + '_3.jpg';
+	} else if (document.referrer && document.referrer.match(/\.mp4/)) {
+		console.log(document.referrer);
+		src = document.referrer;
+	}
+
+	console.log(src);
+	$('.wrapper').prepend(
+		$('<video />')
+			.attr('id', 'player')
+			.attr('autoplay', 'autoplay')
+			.attr('controls', 'controls')
+			.attr('style', 'width: 100%; height: 100%;')
+			.attr('poster', poster)
+			.attr('src', src));
+
+	$('#player').on('loadeddata',function(e){
+		$('#player').height(Math.ceil($('#player').width()*e.target.videoHeight/e.target.videoWidth));
+	});
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+/* html5doctor.com Reset v1.6.1 */
+html,body,div,span,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,abbr,address,cite,code,del,dfn,em,img,ins,kbd,q,samp,small,strong,sub,sup,var,b,i,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td,article,aside,canvas,details,figcaption,figure,footer,header,hgroup,menu,nav,section,summary,time,mark,audio,video{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}article,aside,details,figcaption,figure,footer,header,hgroup,menu,nav,section{display:block}nav ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:none}a{margin:0;padding:0;font-size:100%;vertical-align:baseline;background:transparent}ins{background-color:#ff9;color:#000;text-decoration:none}mark{background-color:#ff9;color:#000;font-style:italic;font-weight:bold}del{text-decoration:line-through}abbr[title],dfn[title]{border-bottom:1px dotted;cursor:help}table{border-collapse:collapse;border-spacing:0}hr{display:block;height:1px;border:0;border-top:1px solid #ccc;margin:1em 0;padding:0}input,select{vertical-align:middle}
+
+body {
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: 1em;
+	background-color: #000;
+}
+
+
+.background {
+}
+.wrapper {
+	background-color: #eee;
+	padding: 20px;
+}
+.wrapper video {
+	width: 100%;
+	height: 100%;
+	background-color: #000;
+}
+
+.wrapper .info{
+	font-size:0.75em;
+	padding-top: 10px;
+	text-align: center
+}
+
+.pertty-bk {
+	-webkit-background-size: 50px 50px;
+	-moz-background-size: 50px 50px;
+	background-size: 50px 50px; /* 控制条纹的大小 */
+	
+	-moz-box-shadow: 1px 1px 8px gray;
+	-webkit-box-shadow: 1px 1px 8px gray;
+	box-shadow: 1px 1px 8px gray;
+	background-color: #c16; color:#fff;
+	background-color: #ac0; color:#333;
+	background-image: -webkit-gradient(linear, 0 0, 100% 100%,
+						color-stop(.25, rgba(255, 255, 255, .2)), color-stop(.25, transparent),
+						color-stop(.5, transparent), color-stop(.5, rgba(255, 255, 255, .2)),
+						color-stop(.75, rgba(255, 255, 255, .2)), color-stop(.75, transparent),
+						to(transparent));
+	background-image: -moz-linear-gradient(-45deg, rgba(255, 255, 255, .2) 25%, transparent 25%,
+						transparent 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, .2) 75%,
+						transparent 75%, transparent);
+	background-image: -o-linear-gradient(-45deg, rgba(255, 255, 255, .2) 25%, transparent 25%,
+						transparent 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, .2) 75%,
+						transparent 75%, transparent);
+	background-image: linear-gradient(-45deg, rgba(255, 255, 255, .2) 25%, transparent 25%,
+						transparent 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, .2) 75%,
+						transparent 75%, transparent);	
+}
+
+.header{
+	text-align: center;
+	padding: 0.75em 0.1em;
+	font-size: 1.5em;
+}
+
+.footer{
+	text-align: center;
+	padding: 1em 0.1em;
+	font-size: 0.75em;
+	line-height: 1.2em;
+}
