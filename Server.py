@@ -45,13 +45,14 @@ class MainHandler(tornado.web.RequestHandler):
 			'validate'			: self.validate,
 			'login'				: self.login,
 			'settings'			: self.settings,
-			'videoid'			: self.videoid,
+			'videoid'			: self.uploadid,
+			'uploadid'			: self.uploadid,
 			'upload_progress'	: self.upload_progress,
 			'upload'			: self.upload,
-			'setvideo'			: self.setvideo,
+			'createvideo'		: self.createvideo,
 			'getvideo'			: self.getvideo,
-			'share'				: self.share,
-			'list'				: self.list,
+			'sharevideo'		: self.sharevideo,
+			'listsharevideo'	: self.listsharevideo,
 		}
 
 	def post(self, api):
@@ -111,12 +112,12 @@ class MainHandler(tornado.web.RequestHandler):
 		if not self.__has_params(data, ('Mobile', 'Device')):
 			raise tornado.web.HTTPError(400, '参数Error')
 
-		self.__reponseJSON({
-			'Now': datetime.now(),
-			'ValidityDate': datetime.now() + timedelta(seconds=90)
-			})
-		pass
+		ValidityDate = self.service.validate(data)
 
+		self.__reponseJSON({ 
+			'Now'   		: datetime.now(),
+			'ValidityDate'	: ValidityDate
+		})
 
 
 	def login(self, data):
@@ -125,18 +126,26 @@ class MainHandler(tornado.web.RequestHandler):
 		方法：
 			login
 		参数：
-			Mobile[string] – 用户手机号码
-			Validate[string] – 验证码（通过调用vaildate接口下发的验证码，由用户输入）
+			Id[string] – 用户手机号码/用户名/绑定邮箱等相关支持方式的Id
+			Device[string] – 登录设备名称
+			Validate[string] – 验证码（通过调用vaildate接口下发的验证码，由用户输入）或 密码
 		返回值：
 			UserKey[string] – 用户登录后的会话ID。（用于后续功能调用）
-			NewUser[boolean] - 新用户
+			NewUser[boolean] – 是否新注册用户
+			ValidityDate[date] – 登录会话有效日期。
 		"""
-		if not self.__has_params(data, ('Mobile', 'Validate')):
+		if not self.__has_params(data, ('Id', 'Device', 'Validate')):
 			raise tornado.web.HTTPError(400, '参数Error')
 
+		result = self.service.login(data)
+		if not result or not result['UserKey']:
+			raise tornado.web.HTTPError(500, '验证码或用户名、密码错误!') 
+
 		self.__reponseJSON({
-			'Error': 0,
-			'Now': datetime.now()
+			'Now'	  : datetime.now(),
+			'UserKey' : result['UserKey'],
+			'NewUser' : result['NewUser'],
+			'ValidityDate' : result['ValidityDate']
 			})
 		pass
 
@@ -165,16 +174,16 @@ class MainHandler(tornado.web.RequestHandler):
 
 
 
-	def videoid(self, data):
+	def uploadid(self, data):
 		"""
 		分配视频ID
 		方法：
-			videoid
+			uploadid
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			Length[long] –视频字节数，单位BYTES。
 		返回值：
-			VID[string] – 分配的视频ID
+			VID[string] – 分配的上传会话ID
 			Length[long] – 视频字节数，单位BYTES。
 		"""
 		if not self.__has_params(data, ('UserKey', 'Length')):
@@ -196,10 +205,10 @@ class MainHandler(tornado.web.RequestHandler):
 			upload_progress
 		参数：
 			UserKey[string] –用户登录后的会话ID。
-			VID[string] – 分配的视频ID
+			VID[string] – 分配的上传会话ID
 		返回值：
 			Error[long] – 发送成功返回0，否则返回非零值。
-			VID[string] – 分配的视频ID
+			VID[string] – 分配的上传会话ID
 			Saved[long] – 上传字节数，单位BYTES。
 			Length[long] – 视频字节数，单位BYTES。
 		"""
@@ -222,7 +231,7 @@ class MainHandler(tornado.web.RequestHandler):
 			upload
 		参数：
 			UserKey[string] –用户登录后的会话ID。
-			VID[string] – 分配的视频ID
+			VID[string] – 分配的上传会话ID
 			Offset[long] – 视频文件偏移，单位BYTES。
 			Data[string] – 数据包，经Base64编码后的数据包。
 			Size[long] – 数据包包含数据大小（Base64编码前）。
@@ -245,14 +254,14 @@ class MainHandler(tornado.web.RequestHandler):
 		pass
 
 
-	def setvideo(self, data):
+	def createvideo(self, data):
 		"""
 		设置视频信息
 		方法：
-			setvideo
+			createvideo
 		参数：
 			UserKey[string] –用户登录后的会话ID。
-			VID[string] – 分配的视频ID
+			UploadId[string] – 分配的上传会话ID
 			Title[string] – 视频标题
 			Author[string] – 分享者/创作者名称
 			CreateTime[date] – 创作日期
@@ -261,7 +270,7 @@ class MainHandler(tornado.web.RequestHandler):
 		返回值：
 			VID[string] – 视频ID
 		"""
-		if not self.__has_params(data, ('UserKey', 'VID')):
+		if not self.__has_params(data, ('UserKey', 'UploadId')):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
 		self.__reponseJSON({
@@ -316,11 +325,11 @@ class MainHandler(tornado.web.RequestHandler):
 
 
 
-	def share(self, data):
+	def sharevideo(self, data):
 		"""
 		分享视频
 		方法：
-			share
+			sharevideo
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			VID[string] – 分配的视频ID
@@ -343,11 +352,11 @@ class MainHandler(tornado.web.RequestHandler):
 
 
 
-	def list(self, data):
+	def listsharevideo(self, data):
 		"""
 		获取Portal列表
 		方法：
-			list
+			listsharevideo
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			Offset[long] – 列表起始位置。
