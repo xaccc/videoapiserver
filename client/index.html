@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>视频分享</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5 maximum-scale=1.0">
+
+    <script src="./js/sencha-touch-all.js"></script>
+    <link rel="stylesheet" href="./css/sencha-touch.css" />
+    <!-- <link rel="stylesheet" href="./css/tizen.css" /> -->
+    <link rel="stylesheet" href="./css/styles.css" />
+
+</head>
+<body>
+<script>
+Ext.define('MyApp.view.Login', {
+    extend: 'Ext.Panel',
+
+    config: {
+        html: 'Login to System',
+        fullscreen: true
+    }
+});
+
+Ext.define('MyApp.view.Welcome', {
+    extend: 'Ext.Container',
+
+    config: {
+        fullscreen: true,
+        layout: {
+            type: 'vbox',
+            align: 'center'
+        },
+        items: [
+            {
+                xtype: 'titlebar',
+                docked: 'top',
+                title: '视频分享'
+            },
+            {
+                xtype: 'label',
+                html: '您的手机号码',
+                margin: '2em 0em 0.5em 0em',
+                style: 'font-size:1.5em;'
+            },
+            {
+                xtype: 'numberfield',
+                placeHolder: '手机号码',
+                width: '12em',
+                required: true,
+                inputCls: 'center',
+                style: 'text-align:center;',
+                margin: 5,
+            },
+            {
+                xtype: 'label',
+                html: '将会给您的手机下发验证码',
+                style: 'font-size:0.75em;',
+                margin: 5,
+            },
+            {
+                xtype: 'button',
+                text: '登录',
+                width: '5em',
+                margin: '3em 0em 0em 0em',
+                listeners: {
+                    'click': function(){
+                        alert('fuck');
+                    }
+                }
+            }
+        ]
+    }
+});
+
+Ext.application({
+    name: 'Demo',
+    viewport: {
+        autoMaximize: true // 该属性可以设置页面自动最大化（隐藏地址栏）
+    },
+
+    launch: function () {
+        Ext.create('MyApp.view.Welcome');
+        // Ext.Viewport是Sencha Touch自动创建的一个顶级容器
+        //Ext.Viewport.add(aPicker);
+    }
+});
+</script>
+</body>
+</html>
