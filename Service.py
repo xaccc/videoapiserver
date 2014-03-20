@@ -86,6 +86,21 @@ class Service(object):
 			raise Exception("用户不存在.")
 
 
+	def getUserIdByMobile(self, mobile):
+		"""
+		获取用户ID
+		方法：
+			getUserIdByMobile
+		参数：
+			mobile[string] – 用户手机号
+		返回值：
+			[string] – 用户ID 或 None
+		"""
+		db = self.__getDB()
+		user = db.get("SELECT * FROM `user` WHERE `mobile`=%s", mobile)
+		return user['id'] if user else None
+
+
 	def validate(self, data):
 		"""
 		发送短信验证码
@@ -206,7 +221,7 @@ class Service(object):
 			Length[long] –视频字节数，单位BYTES。
 		返回值：
 			Error[long] – 发送成功返回0，否则返回非零值。
-			VID[string] – 分配的视频ID
+			UploadId[string] – 分配的视频ID
 			Length[long] – 视频字节数，单位BYTES。
 		"""
 		userId = self.getUserId(data['UserKey'])
@@ -227,7 +242,7 @@ class Service(object):
 			upload_progress
 		参数：
 			UserKey[string] –用户登录后的会话ID。
-			VID[string] – 分配的视频ID
+			UploadId[string] – 分配的视频ID
 		返回值：
 			Length[long] – 视频字节数，单位BYTES。
 			Saved[long] – 上传字节数，单位BYTES。
@@ -235,7 +250,7 @@ class Service(object):
 		userId = self.getUserId(data['UserKey'])
 		db = self.__getDB()
 
-		uploadSession = db.get("SELECT * FROM `upload` WHERE `id`=%s and `owner_id` = %s",(data['VID'], userId))
+		uploadSession = db.get("SELECT * FROM `upload` WHERE `id`=%s and `owner_id` = %s",(data['UploadId'], userId))
 		if uploadSession == False:
 			raise Exception("Upload session don't exists.")
 		length = uploadSession['length']
@@ -251,7 +266,7 @@ class Service(object):
 			upload
 		参数：
 			UserKey[string] –用户登录后的会话ID。
-			VID[string] – 分配的视频ID
+			UploadId[string] – 分配的视频ID
 			Offset[long] – 视频文件偏移，单位BYTES。
 			Data[string] – 数据包，经Base64编码后的数据包。
 			Size[long] – 数据包包含数据大小（Base64编码前）。
@@ -262,7 +277,7 @@ class Service(object):
 		userId = self.getUserId(data['UserKey'])
 		db = self.__getDB()
 
-		uploadSession = db.get("SELECT * FROM `upload` WHERE `id`=%s and `owner_id` = %s",(data['VID'], userId))
+		uploadSession = db.get("SELECT * FROM `upload` WHERE `id`=%s and `owner_id` = %s",(data['UploadId'], userId))
 
 		if uploadSession == False:
 			raise Exception("Upload session don't exists.")
@@ -281,7 +296,7 @@ class Service(object):
 		if length > 0 and offset != uploadSession['saved']:
 			raise Exception("Upload data don't sync.")
 
-		if db.update("UPDATE `upload` SET `saved` = %s, `update_time` = now() WHERE `id` = %s", (saved, data['VID'])) != 1:
+		if db.update("UPDATE `upload` SET `saved` = %s, `update_time` = now() WHERE `id` = %s", (saved, data['UploadId'])) != 1:
 			raise Exception("Write database error.")
 		db.end()
 
@@ -290,76 +305,57 @@ class Service(object):
 			os.makedirs(self.uploadDirectory)
 
 
-		fileName = "%s/%s" % (self.uploadDirectory, data['VID'])
+		fileName = "%s/%s" % (self.uploadDirectory, data['UploadId'])
 
 		f = open(fileName, 'ab')
 		f.write(bindata)
 		f.close()
 
-		if length == saved:
-			# 上传完成，进行相应处理
-			print "上传完成，进行相应处理 ..."
-			self.createVideo({
-				'UserKey': data['UserKey'],
-				'VID'	 : data['VID'],
-				})
-			print "done!"
-			
-
 		return length,saved
 
-	def createVideo(self,data):
+
+	def createvideo(self,data):
 		"""
-		创建视频信息
+		设置视频信息
 		方法：
-			createVideo
+			createvideo
 		参数：
 			UserKey[string] –用户登录后的会话ID。
-			VID[string] – 分配的视频ID
+			UploadId[string] – 分配的上传会话ID
+			Title[string] – 视频标题
+			Author[string] – 分享者/创作者名称
+			CreateTime[date] – 创作日期
+			Category[string] – 视频分类
+			Describe[string] – 视频描述
+			Tag[string] – 视频标签，标签内容有半角“,”（逗号）分割
 		返回值：
-			[boolean] – 是否成功创建
+			VID[string] – 视频ID
 		"""
+
 		userId = self.getUserId(data['UserKey'])
 
 		# auto create directory
 		if not os.path.exists(self.videoDirectory):
 			os.makedirs(self.videoDirectory)
 
-		fileName = "%s/%s" % (self.uploadDirectory, data['VID'])
-		destFileName = "%s/%s.mp4" % (self.videoDirectory, data['VID'])
+		fileName = "%s/%s" % (self.uploadDirectory, data['UploadId'])
+		destFileName = "%s/%s.mp4" % (self.videoDirectory, data['UploadId'])
 
-		if Transcoder.videoTransform(fileName, destFileName) == True:
+		if Transcoder.videoTransform(fileName, destFileName):
 			db = self.__getDB()
 			newId = self.generateId()
 			media = MediaProbe(fileName)
 
 			# media.createTime()
-			result = db.save("""INSERT INTO `video` (`id`, `upload_id`, `owner_id`, `duration`, `video_width`, `video_height`, `video_bitrate`) VALUES (%s,%s,%s,%s,%s,%s,%s)""",
-							(newId, data['VID'], userId, media.duration(), media.videoWidth(), media.videoHeight(), media.videoBitrate()))
+			result = db.save("""INSERT INTO `video` (`id`, `upload_id`, `owner_id`, `duration`, `video_width`, `video_height`, `video_bitrate`, `title`, `author`, `create_date`, `category`, `describe`) 
+								VALUES (%s,%s,%s,%s,%s, %s,%s,%s,%s,%s, %s,%s)""",
+							(newId, data['UploadId'], userId, media.duration(), media.videoWidth(), media.videoHeight(), media.videoBitrate(), 
+							data.get('Title'),data.get('Author'),data.get('CreateTime'),data.get('Category'),data.get('Describe')))
 			db.end()
 			os.remove(fileName)
-			return True
+			return newId
 			
-		return False
-
-
-	def setvideo(self, data):
-		"""
-		设置视频信息
-		方法：
-			setvideo
-		参数：
-			UserKey[string] –用户登录后的会话ID。
-			VID[string] – 分配的视频ID
-			Title[string] – 视频标题
-			Author[string] – 分享者/创作者名称
-			CreateTime[date] – 创作日期
-			Category[string] – 视频分类
-			Tag[string] – 视频标签，标签内容有半角“,”（逗号）分割
-		返回值：
-			VID[string] – 视频ID
-		"""
-		pass
+		return None
 
 
 	def getvideo(self, data):
@@ -377,6 +373,7 @@ class Service(object):
 			Author[string] – 分享者/创作者名称
 			CreateTime[date] – 创作日期
 			Category[string] – 视频分类
+			Describe[string] – 视频描述
 			Tag[string] – 视频标签，标签内容有半角“,”（逗号）分割
 			Duration[long] – 视频长度
 			Definition[long] – 视频清晰度： 0:流畅，1:标清，2:高清，3:超清
@@ -385,29 +382,26 @@ class Service(object):
 		"""
 		userId = self.getUserId(data['UserKey'])
 		db = self.__getDB()
-		videoInstance = db.get('SELECT * FROM `video` WHERE `upload_id` = %s', (data['VID']))
-		if videoInstance != False:
-			#videoInstance['video_bitrate']
-			#videoInstance['video_height']
-
+		videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
+		if videoInstance:
 			PosterBaseURL = self.applicationConfig.get('Video','PosterBaseURL')
 			PosterURLs = []
 			for i in range(0,5):
-				PosterURLs.append("%s/%s_%d.jpg" % (PosterBaseURL, data['VID'], int(i+1)))
+				PosterURLs.append("%s/%s_%d.jpg" % (PosterBaseURL, videoInstance['upload_id'], int(i+1)))
 
 
 			VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
 			VideoURLs = []
-			VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,data['VID']))
+			VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['upload_id']))
 			return {
-				'VID'   	: videoInstance['upload_id'],
+				'VID'   	: videoInstance['id'],
 				'Owner' 	: self.getUserMobile(videoInstance['owner_id']),
 				'Title' 	: videoInstance['title'],
 				'Author' 	: videoInstance['author'],
 				'CreateTime': videoInstance['create_date'],
 				'Category' 	: videoInstance['category'],
 				'Describe' 	: videoInstance['describe'],
-				'Tag' 		: '',
+				'Tag' 		: videoInstance['tag'],
 				'Duration' 	: videoInstance['duration'],
 				'Definition': MediaProbe.definition(videoInstance['video_height']),
 				'PosterURLs': PosterURLs,
@@ -418,11 +412,11 @@ class Service(object):
 
 
 
-	def share(self, data):
+	def sharevideo(self, data):
 		"""
 		分享视频
 		方法：
-			share
+			sharevideo
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			VID[string] – 分配的视频ID
@@ -430,26 +424,46 @@ class Service(object):
 				Mobile[string] – 分享手机号，必填
 				Name[string] – 分享姓名，可选
 		返回值：
-			Error[long] – 发送成功返回0，否则返回非零值。
+			sessionId[string] – 分配的分享会话ID
 			Results[Array] – 分享结果对象列表，分享结果对象如下定义：
 				Mobile[string] – 分享手机号
 				Signup[boolean] – 是否注册用户
 		"""
-		pass
+		userId = self.getUserId(data['UserKey'])
+		db = self.__getDB()
+
+		videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
+		if not videoInstance:
+			raise Exception("视频不存在.")
+
+		sessionId = self.generateId()
+		results = []
+		for to in data.get('To', ()):
+			toUserId = self.getUserIdByMobile(to.get('Mobile'))
+			result = db.save("""INSERT INTO `share` (`session_id`,`owner_id`,`video_id`,`to_user_id`,`to_mobile`,`to_name`) VALUES (%s,%s,%s,%s,%s,%s)"""
+						, (sessionId, userId, data['VID'], toUserId, to.get('Mobile'), to.get('Name')))
+			db.end()
+
+			if result:
+				results.append({
+					'Mobile': to.get('Mobile'),
+					'Signup': toUserId != None
+					})
+
+		return {'SessionId': sessionId, 'Results': results}
 
 
 
-	def list(self, data):
+	def listsharevideo(self, data):
 		"""
 		获取Portal列表
 		方法：
-			list
+			listsharevideo
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			Offset[long] – 列表起始位置。
 			Max[long] – 列表最大条数
 		返回值：
-			Error[long] – 发送成功返回0，否则返回非零值。
 			Count[long] – 列表数量（全部）
 			Offset[long] – 列表起始位置。
 			Max[long] – 列表最大条数
@@ -467,7 +481,48 @@ class Service(object):
 				PosterURLs[array] – 视频截图URLs，JPG文件
 				VideoURLs[array] – 视频播放URLs，数量参考清晰度(清晰度+1)
 		"""
-		pass
+		userId = self.getUserId(data['UserKey'])
+		db = self.__getDB()
+
+		offset = data.get('Offset', 0)
+		listMax = min(100, data.get('Max', 10))
+		count = long(db.get('SELECT count(id) as c FROM `video` WHERE `owner_id` = %s', userId).get('c'))
+
+		results = []
+
+		videoListInstance = db.list('SELECT * FROM `video` WHERE `owner_id` = %s LIMIT %s,%s', (userId, offset, listMax))
+
+		PosterBaseURL = self.applicationConfig.get('Video','PosterBaseURL')
+		VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
+
+		for videoInstance in videoListInstance:
+			PosterURLs = []
+			for i in range(0,5):
+				PosterURLs.append("%s/%s_%d.jpg" % (PosterBaseURL, videoInstance['id'], int(i+1)))
+
+			VideoURLs = []
+			VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['id']))
+			results.append({
+				'VID'   	: videoInstance['upload_id'],
+				'Owner' 	: self.getUserMobile(videoInstance['owner_id']),
+				'Title' 	: videoInstance['title'],
+				'Author' 	: videoInstance['author'],
+				'CreateTime': videoInstance['create_date'],
+				'Category' 	: videoInstance['category'],
+				'Describe' 	: videoInstance['describe'],
+				'Tag' 		: videoInstance['tag'],
+				'Duration' 	: videoInstance['duration'],
+				'Definition': MediaProbe.definition(videoInstance['video_height']),
+				'PosterURLs': PosterURLs,
+				'VideoURLs'	: VideoURLs,
+			})
+
+		return {
+			'Count'		: count,
+			'Offset'	: offset,
+			'Max'		: listMax,
+			'Results'	: results,
+		}
 
 
 

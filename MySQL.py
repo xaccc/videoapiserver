@@ -101,7 +101,7 @@ class MySQL(object):
 		if count > 0:
 			result = self._cursor.fetchall()
 		else:
-			result = False
+			result = []
 
 		return result
 

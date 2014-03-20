@@ -30,45 +30,27 @@ class MediaProbe(object):
 
 
 	def __stream(self, typeName):
-		if self.probe['streams']:
+		if self.probe.get('streams'):
 			for stream in self.probe['streams']:
-				if stream['codec_type'] == typeName:
+				if stream.get('codec_type') == typeName:
 					return stream
 
 		return None
 
 	def __get(self, stream, key):
-		if stream == None:
-			return None
-		if not stream.has_key(key):
-			return ''
-		return stream[key]
+		return stream.get(key) if stream else None
 	def __getFloat(self, stream, key):
-		if stream == None:
-			return None
-		if not stream.has_key(key):
-			return 0.0
-		return float(stream[key])
+		return float(stream.get(key, 0.0)) if stream else None
 	def __getLong(self, stream, key):
-		if stream == None:
-			return None
-		if not stream.has_key(key):
-			return 0L
-		return long(float(stream[key]))
+		return long(float(stream.get(key, 0))) if stream else None
 	def __getInt(self, stream, key):
-		if stream == None:
-			return None
-		if not stream.has_key(key):
-			return 0L
-		return long(float(stream[key]))
+		return int(float(stream.get(key, 0))) if stream else None
+
 	def hasVideo(self):
-		if self.videoStream == None:
-			return False
-		return True
+		return self.videoStream != None
 	def hasAudio(self):
-		if self.audioStream == None:
-			return False
-		return True
+		return self.audioStream != None
+
 	def videoBitrate(self):
 		return self.__getInt(self.videoStream, 'bit_rate')
 	def audioBitrate(self):

@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- 主机: localhost
--- 生成日期: 2014 年 03 月 19 日 11:44
+-- 生成日期: 2014 年 03 月 20 日 08:28
 -- 服务器版本: 5.1.69
 -- PHP 版本: 5.3.3
 
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS `share` (
 
 DROP TABLE IF EXISTS `upload`;
 CREATE TABLE IF NOT EXISTS `upload` (
-  `id` char(32) COLLATE utf8_bin NOT NULL COMMENT '上床会话ID',
+  `id` char(32) COLLATE utf8_bin NOT NULL COMMENT '上传会话ID',
   `owner_id` char(32) COLLATE utf8_bin NOT NULL COMMENT '所有者ID',
   `length` bigint(20) NOT NULL COMMENT '文件字节数',
   `saved` bigint(20) NOT NULL COMMENT '上传字节数',
@@ -103,7 +103,8 @@ CREATE TABLE IF NOT EXISTS `user` (
   `login` varchar(20) COLLATE utf8_bin DEFAULT NULL COMMENT '登录名',
   PRIMARY KEY (`id`),
   UNIQUE KEY `mobile` (`mobile`),
-  UNIQUE KEY `login` (`login`)
+  UNIQUE KEY `login` (`login`),
+  UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='用户';
 
 -- --------------------------------------------------------
@@ -220,5 +221,4 @@ CREATE TABLE IF NOT EXISTS `video_view` (
 --
 DROP TABLE IF EXISTS `video_view`;
 
-CREATE VIEW `video_view` AS 
-select `a`.`id` AS `id`,`a`.`upload_id` AS `upload_id`,`a`.`owner_id` AS `owner_id`,`a`.`title` AS `title`,`a`.`author` AS `author`,`a`.`create_date` AS `create_date`,`a`.`category` AS `category`,`a`.`describe` AS `describe`,`a`.`duration` AS `duration`,`a`.`video_width` AS `video_width`,`a`.`video_height` AS `video_height`,`a`.`video_bitrate` AS `video_bitrate`,`a`.`upload_progress` AS `upload_progress`,`a`.`create_time` AS `create_time`,`b`.`length` AS `length` from (`video` `a` left join `upload` `b` on((`a`.`upload_id` = `b`.`id`))) order by `a`.`create_time` desc;
+CREATE VIEW `video_view` AS select `a`.`id` AS `id`,`a`.`upload_id` AS `upload_id`,`a`.`owner_id` AS `owner_id`,`a`.`title` AS `title`,`a`.`author` AS `author`,`a`.`create_date` AS `create_date`,`a`.`category` AS `category`,`a`.`describe` AS `describe`,`a`.`duration` AS `duration`,`a`.`video_width` AS `video_width`,`a`.`video_height` AS `video_height`,`a`.`video_bitrate` AS `video_bitrate`,`a`.`upload_progress` AS `upload_progress`,`a`.`create_time` AS `create_time`,`b`.`length` AS `length` from (`video` `a` left join `upload` `b` on((`a`.`upload_id` = `b`.`id`))) order by `a`.`create_time` desc;

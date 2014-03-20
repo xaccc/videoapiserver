@@ -45,7 +45,6 @@ class MainHandler(tornado.web.RequestHandler):
 			'validate'			: self.validate,
 			'login'				: self.login,
 			'settings'			: self.settings,
-			'videoid'			: self.uploadid,
 			'uploadid'			: self.uploadid,
 			'upload_progress'	: self.upload_progress,
 			'upload'			: self.upload,
@@ -183,17 +182,16 @@ class MainHandler(tornado.web.RequestHandler):
 			UserKey[string] –用户登录后的会话ID。
 			Length[long] –视频字节数，单位BYTES。
 		返回值：
-			VID[string] – 分配的上传会话ID
+			UploadId[string] – 分配的上传会话ID
 			Length[long] – 视频字节数，单位BYTES。
 		"""
 		if not self.__has_params(data, ('UserKey', 'Length')):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
-		vid = self.service.uploadid(data)
 		self.__reponseJSON({
-			'Now': datetime.now(),
-			'VID': vid,
-			'Length': data['Length']
+			'Now'		: datetime.now(),
+			'UploadId'	: self.service.uploadid(data),
+			'Length'	: data['Length']
 			})
 		pass
 
@@ -205,22 +203,22 @@ class MainHandler(tornado.web.RequestHandler):
 			upload_progress
 		参数：
 			UserKey[string] –用户登录后的会话ID。
-			VID[string] – 分配的上传会话ID
+			UploadId[string] – 分配的上传会话ID
 		返回值：
 			Error[long] – 发送成功返回0，否则返回非零值。
-			VID[string] – 分配的上传会话ID
+			UploadId[string] – 分配的上传会话ID
 			Saved[long] – 上传字节数，单位BYTES。
 			Length[long] – 视频字节数，单位BYTES。
 		"""
-		if not self.__has_params(data, ('UserKey', 'VID')):
+		if not self.__has_params(data, ('UserKey', 'UploadId')):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
 		length, saved = self.service.upload_progress(data)
 		self.__reponseJSON({
-			'Now'   : datetime.now(),
-			'VID'   : data['VID'],
-			'Length': length,
-			'Saved' : saved,
+			'Now'   	: datetime.now(),
+			'UploadId'	: data['UploadId'],
+			'Length'	: length,
+			'Saved' 	: saved,
 			})
 		pass
 
@@ -231,7 +229,7 @@ class MainHandler(tornado.web.RequestHandler):
 			upload
 		参数：
 			UserKey[string] –用户登录后的会话ID。
-			VID[string] – 分配的上传会话ID
+			UploadId[string] – 分配的上传会话ID
 			Offset[long] – 视频文件偏移，单位BYTES。
 			Data[string] – 数据包，经Base64编码后的数据包。
 			Size[long] – 数据包包含数据大小（Base64编码前）。
@@ -240,23 +238,23 @@ class MainHandler(tornado.web.RequestHandler):
 			Saved[long] – 上传字节数，单位BYTES。
 			Length[long] – 视频字节数，单位BYTES。
 		"""
-		if not self.__has_params(data, ('UserKey', 'VID', 'Offset', 'Data', 'Size')):
+		if not self.__has_params(data, ('UserKey', 'UploadId', 'Offset', 'Data', 'Size')):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
 		length, saved = self.service.upload(data)
 
 		self.__reponseJSON({
-			'Now'   : datetime.now(),
-			'VID'   : data['VID'],
-			'Length': length,
-			'Saved' : saved,
+			'Now'		: datetime.now(),
+			'UploadId'	: data['UploadId'],
+			'Length'	: length,
+			'Saved'		: saved,
 			})
 		pass
 
 
 	def createvideo(self, data):
 		"""
-		设置视频信息
+		创建视频信息
 		方法：
 			createvideo
 		参数：
@@ -274,7 +272,8 @@ class MainHandler(tornado.web.RequestHandler):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
 		self.__reponseJSON({
-			'Now': datetime.now()
+			'Now': datetime.now(),
+			'VID': self.service.createvideo(data)
 			})
 		pass
 
@@ -323,8 +322,6 @@ class MainHandler(tornado.web.RequestHandler):
 			})
 
 
-
-
 	def sharevideo(self, data):
 		"""
 		分享视频
@@ -337,7 +334,6 @@ class MainHandler(tornado.web.RequestHandler):
 				Mobile[string] – 分享手机号，必填
 				Name[string] – 分享姓名，可选
 		返回值：
-			Error[long] – 发送成功返回0，否则返回非零值。
 			Results[Array] – 分享结果对象列表，分享结果对象如下定义：
 				Mobile[string] – 分享手机号
 				Signup[boolean] – 是否注册用户
@@ -345,11 +341,7 @@ class MainHandler(tornado.web.RequestHandler):
 		if not self.__has_params(data, ('UserKey', 'VID', 'To')):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
-		self.__reponseJSON({
-			'Now': datetime.now()
-			})
-		pass
-
+		self.__reponseJSON(self.service.sharevideo(data))
 
 
 	def listsharevideo(self, data):
@@ -362,7 +354,6 @@ class MainHandler(tornado.web.RequestHandler):
 			Offset[long] – 列表起始位置。
 			Max[long] – 列表最大条数
 		返回值：
-			Error[long] – 发送成功返回0，否则返回非零值。
 			Count[long] – 列表数量（全部）
 			Offset[long] – 列表起始位置。
 			Max[long] – 列表最大条数
@@ -380,15 +371,10 @@ class MainHandler(tornado.web.RequestHandler):
 				PosterURLs[array] – 视频截图URLs，JPG文件
 				VideoURLs[array] – 视频播放URLs，数量参考清晰度(清晰度+1)
 		"""
-		if not self.__has_params(data, ('UserKey', 'Offset', 'Max')):
+		if not self.__has_params(data, ['UserKey']):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
-		self.__reponseJSON({
-			'Now': datetime.now()
-			})
-		pass
-
-
+		self.__reponseJSON(self.service.listsharevideo(data))
 
 
 

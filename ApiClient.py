@@ -20,8 +20,8 @@ def generateId():
 
 class ApiClient(object):
 
-	def __init__(self):
-		self.userKey = ''
+	def __init__(self,userKey=''):
+		self.userKey = userKey
 		pass
 
 	def __postJSON(self,url,data):
@@ -33,7 +33,11 @@ class ApiClient(object):
 			response = urllib2.urlopen(req, json.dumps(data))
 			content = response.read()
 			return json.loads(content)
-		except Exception as e:
+		except urllib2.HTTPError, e:
+		    return json.loads(e.read())
+		except urllib2.URLError, e:
+		    print 'Reason: ', e.reason
+		else:
 			print e
 		
 		return None
@@ -66,7 +70,25 @@ class ApiClient(object):
 	def uploadProgress(self,id):
 		return self.__postJSON(baseURL + '/upload_progress', {
 				'UserKey'	: self.userKey,
-				'VID'		: id,
+				'UploadId'	: id,
+				})
+
+
+	def upload(self,id, length, offset, bdata):
+		return self.__postJSON(baseURL + '/upload', {
+				'UserKey'	: self.userKey,
+				'UploadId'	: id,
+				'Length'	: length,
+				'Offset'	: offset,
+				'Size'		: len(bdata),
+				'Data'		: base64.b64encode(bdata),
+				})
+
+
+	def createVideo(self,id):
+		return self.__postJSON(baseURL + '/createvideo', {
+				'UserKey'	: self.userKey,
+				'UploadId'	: id,
 				})
 
 
@@ -76,16 +98,21 @@ class ApiClient(object):
 				'VID'		: id,
 				})
 
-
-	def upload(self,id, length, offset, bdata):
-		return self.__postJSON(baseURL + '/upload', {
+	def shreaVideo(self, id, toList):
+		return self.__postJSON(baseURL + '/sharevideo', {
 				'UserKey'	: self.userKey,
 				'VID'		: id,
-				'Length'	: length,
-				'Offset'	: offset,
-				'Size'		: len(bdata),
-				'Data'		: base64.b64encode(bdata),
+				'To'		: toList
 				})
+
+	def listShareVideo(self, offset=0, listMax=10):
+		return self.__postJSON(baseURL + '/listsharevideo', {
+				'UserKey'	: self.userKey,
+				'Offset'	: offset,
+				'Max'		: listMax
+				})
+
+
 
 
 
