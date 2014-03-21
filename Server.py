@@ -98,9 +98,9 @@ class MainHandler(tornado.web.RequestHandler):
 	#
 	###########################################################################
 	
-	def userkey(self, data):
+	def userKey(self, data):
 		"""
-		发送短信验证码
+		检验userKey是否有效
 		方法：
 			userkey
 		参数：
