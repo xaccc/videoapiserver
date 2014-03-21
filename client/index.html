@@ -18,14 +18,64 @@ Ext.define('MyApp.view.Main', {
 
     config:{
         fullscreen: true,
+        baseCls: 'mainPage',
         layout: {
             type: 'vbox',
             align: 'center'
         },
-        html: 'fuck you'        
+        items:[
+            {
+                xtype: 'button',
+                margin: '3em 0em 0em 0em',
+                baseCls: 'startShareBtn',
+                listeners: {
+                    tap: function(){
+                        Ext.Msg.alert("Fuck!");
+                    }
+                }
+            },
+            {
+                xtype : 'container',
+                docked: 'bottom',
+                layout: 'hbox',
+                baseCls: 'homeToolbar',
+                items: [
+                    {
+                        xtype: 'button',
+                        flex: 1,
+                        text: '分享记录',
+                        height: '4em',
+                        icon: './images/share_list.png',
+                        baseCls: 'homeShreaList',
+                        listeners: {
+                            tap: function(){
+                                Ext.Msg.alert("Fuck!");
+                            }
+                        },
+                    },
+                    {
+                        xtype: 'button',
+                        flex: 1,
+                        text: '我的账户',
+                        height: '4em',
+                        icon: './images/profile.png',
+                        baseCls: 'homeProfile',
+                        listeners: {
+                            tap: function(){
+                                Ext.Msg.alert("you!");
+                            }
+                        },
+                    },                    
+                ]
+            },
+        ]
     }
 });
 
+
+//
+// 登录，验证短信息界面
+//
 Ext.define('MyApp.view.Login', {
     extend: 'Ext.Container',
 
@@ -49,7 +99,6 @@ Ext.define('MyApp.view.Login', {
                 width: '12em',
                 required: true,
                 inputCls: 'center',
-                style: 'text-align:center;',
                 margin: 5,
             },
             {
@@ -79,7 +128,7 @@ Ext.define('MyApp.view.Login', {
                                 console.log(data);
                                 window.localStorage.setItem('userKey',data.UserKey);
                                 window.localStorage.setItem('userKeyValidityDate',data.ValidityDate);
-                                Ext.Msg.alert('Welcome back');
+                                Ext.Viewport.setActiveItem(Ext.create('MyApp.view.Main'));
                             },
                             failure: function(response, opts) {
                                 Ext.Msg.alert('验证码输入错误，请确认后重新输入！');
@@ -93,6 +142,9 @@ Ext.define('MyApp.view.Login', {
     }
 });
 
+//
+// 输入手机号界面，启动界面
+//
 Ext.define('MyApp.view.Start', {
     extend: 'Ext.NavigationView',
 
@@ -158,48 +210,25 @@ Ext.define('MyApp.view.Start', {
     }
 });
 
+
+//
+// startup
+//
 Ext.application({
     name: 'AppName',
     viewport: {
         autoMaximize: true // 该属性可以设置页面自动最大化（隐藏地址栏）
     },
     launch: function () {
+        Ext.Ajax.setTimeout(10000);
         // Ext.Viewport是Sencha Touch自动创建的一个顶级容器
         if (!window.localStorage.getItem('userKey'))
             Ext.Viewport.add(Ext.create('MyApp.view.Start'));
         else
             Ext.Viewport.add(Ext.create('MyApp.view.Main'));
-
     }
 });
 
-/*
-// 处理一下android返回按钮
-document.addEventListener("deviceready", onDeviceReady, false);
-
-function onDeviceReady() {
-    document.addEventListener("backbutton", onBackKeyDown, false);
-}
-
-function onBackKeyDown() {
-    var canPop = false;
-    var id = Ext.Viewport.getActiveItem().id;
-    if (id.indexOf("Welcome") != -1) {
-    } else if (id.indexOf("Login") != -1) {
-        var logView = Ext.Viewport.getActiveItem();
-        var length = logView.getItems().length;
-        if (length > 2) {
-            canPop = true;
-        }
-    }
-    if (canPop) {
-        console.log("canPop");
-        AppName.app.getController("MainController").pop(1);
-    } else {
-        navigator.app.exitApp();
-    }
-}
-*/
 </script>
 </body>
 </html>
