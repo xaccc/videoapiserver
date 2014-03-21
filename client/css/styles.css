@@ -12,3 +12,11 @@ body {
 .center{
 	text-align: center;
 }
+
+.nextBtn {
+	background: url(../images/next_button.png) center center no-repeat;
+	background-size: 100% 100%;
+	width: 5em;
+	height: 5em;
+	border: none;
+}

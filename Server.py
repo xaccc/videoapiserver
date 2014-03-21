@@ -43,6 +43,7 @@ class MainHandler(tornado.web.RequestHandler):
 		self.service = service
 		self.urlmap = {
 			'validate'			: self.validate,
+			'userkey'			: self.userKey,
 			'login'				: self.login,
 			'settings'			: self.settings,
 			'uploadid'			: self.uploadid,
@@ -96,6 +97,26 @@ class MainHandler(tornado.web.RequestHandler):
 	# API 功能实现
 	#
 	###########################################################################
+	
+	def userkey(self, data):
+		"""
+		发送短信验证码
+		方法：
+			userkey
+		参数：
+			UserKey[string] – 用户登录后的会话ID
+		返回值：
+			UserId[String] – 用户ID
+		"""
+		if not self.__has_params(data, ('UserKey')):
+			raise tornado.web.HTTPError(400, '参数Error')
+
+		userId = self.service.getUserId(data['UserKey'])
+
+		self.__reponseJSON({ 
+			'Now'		: datetime.now(),
+			'userId'	: userId
+		})
 	
 	def validate(self, data):
 		"""
