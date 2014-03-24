@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5 maximum-scale=1.0">
 
     <script src="./js/sencha-touch-all.js"></script>
+    <script src="./js/apiclient.js"></script>
+    <script src="./js/views.js"></script>
     <link rel="stylesheet" href="./css/sencha-touch.css" />
     <!-- <link rel="stylesheet" href="./css/tizen.css" /> -->
     <link rel="stylesheet" href="./css/styles.css" />
@@ -13,204 +15,6 @@
 </head>
 <body>
 <script>
-Ext.define('MyApp.view.Main', {
-    extend: 'Ext.Container',
-
-    config:{
-        fullscreen: true,
-        baseCls: 'mainPage',
-        layout: {
-            type: 'vbox',
-            align: 'center'
-        },
-        items:[
-            {
-                xtype: 'button',
-                margin: '3em 0em 0em 0em',
-                baseCls: 'startShareBtn',
-                listeners: {
-                    tap: function(){
-                        Ext.Msg.alert("Fuck!");
-                    }
-                }
-            },
-            {
-                xtype : 'container',
-                docked: 'bottom',
-                layout: 'hbox',
-                baseCls: 'homeToolbar',
-                items: [
-                    {
-                        xtype: 'button',
-                        flex: 1,
-                        text: '分享记录',
-                        height: '4em',
-                        icon: './images/share_list.png',
-                        baseCls: 'homeShreaList',
-                        listeners: {
-                            tap: function(){
-                                Ext.Msg.alert("Fuck!");
-                            }
-                        },
-                    },
-                    {
-                        xtype: 'button',
-                        flex: 1,
-                        text: '我的账户',
-                        height: '4em',
-                        icon: './images/profile.png',
-                        baseCls: 'homeProfile',
-                        listeners: {
-                            tap: function(){
-                                Ext.Msg.alert("you!");
-                            }
-                        },
-                    },                    
-                ]
-            },
-        ]
-    }
-});
-
-
-//
-// 登录，验证短信息界面
-//
-Ext.define('MyApp.view.Login', {
-    extend: 'Ext.Container',
-
-    config: {
-        fullscreen: true,
-        layout: {
-            type: 'vbox',
-            align: 'center'
-        },
-        items: [
-            {
-                xtype: 'label',
-                html: '输入验证码',
-                margin: '2em 0em 0.5em 0em',
-                style: 'font-size:1.5em;'
-            },
-            {
-                xtype: 'textfield',
-                id: 'validateNumber',
-                placeHolder: '短信验证码',
-                width: '12em',
-                required: true,
-                inputCls: 'center',
-                margin: 5,
-            },
-            {
-                xtype: 'label',
-                html: '将会给您的手机下发验证码',
-                style: 'font-size:0.75em;',
-                margin: 5,
-            },
-            {
-                xtype: 'button',
-                width: '5em',
-                margin: '3em 0em 0em 0em',
-                baseCls: 'nextBtn',
-                listeners: {
-                    tap: function(){
-                        // 登录
-                        Ext.Ajax.request({
-                            url: '/videoapiserver/api/login',
-                            jsonData: {
-                                Id: Ext.getCmp('mobileNumber').getValue(),
-                                Device: 'WebClient',
-                                Validate: Ext.getCmp('validateNumber').getValue(),
-                            },
-                            success: function(response){
-                                // 掉转到输入验证码页面
-                                data = JSON.parse(response.responseText);
-                                console.log(data);
-                                window.localStorage.setItem('userKey',data.UserKey);
-                                window.localStorage.setItem('userKeyValidityDate',data.ValidityDate);
-                                Ext.Viewport.setActiveItem(Ext.create('MyApp.view.Main'));
-                            },
-                            failure: function(response, opts) {
-                                Ext.Msg.alert('验证码输入错误，请确认后重新输入！');
-                                console.log(response);
-                            }
-                        });
-                    }
-                }
-            }
-        ]
-    }
-});
-
-//
-// 输入手机号界面，启动界面
-//
-Ext.define('MyApp.view.Start', {
-    extend: 'Ext.NavigationView',
-
-    config: {
-        id: 'MyApp.view.Start',
-        fullscreen: true,
-        defaultBackButtonText: '返回',
-        items: [{
-            xtype: 'container',
-            title: '视频分享',
-            layout: {
-                type: 'vbox',
-                align: 'center'
-            },
-            items: [
-                {
-                    xtype: 'label',
-                    html: '您的手机号码',
-                    margin: '2em 0em 0.5em 0em',
-                    style: 'font-size:1.5em;'
-                },
-                {
-                    xtype: 'textfield',
-                    id: 'mobileNumber',
-                    placeHolder: '手机号码',
-                    width: '12em',
-                    required: true,
-                    inputCls: 'center',
-                    style: 'text-align:center;',
-                    margin: 5,
-                },
-                {
-                    xtype: 'label',
-                    html: '将会给您的手机下发验证码',
-                    style: 'font-size:0.75em;',
-                    margin: 5,
-                },
-                {
-                    xtype: 'button',
-                    width: '5em',
-                    margin: '3em 0em 0em 0em',
-                    baseCls: 'nextBtn',
-                    handler: function(){
-                        // 发送验证码
-                        Ext.Ajax.request({
-                            url: '/videoapiserver/api/validate',
-                            jsonData: {
-                                Mobile: Ext.getCmp('mobileNumber').getValue(),
-                                Device: 'WebClient'
-                            },
-                            success: function(response){
-                                // 掉转到输入验证码页面
-                                Ext.getCmp('MyApp.view.Start').push(Ext.create('MyApp.view.Login'));
-                            },
-                            failure: function(response, opts) {
-                                Ext.Msg.alert('获取验证码失败，请稍后重试！');
-                            }
-                        });
-                    }
-                }
-            ]
-        }]
-    }
-});
-
-
 //
 // startup
 //
@@ -220,7 +24,6 @@ Ext.application({
         autoMaximize: true // 该属性可以设置页面自动最大化（隐藏地址栏）
     },
     launch: function () {
-        Ext.Ajax.setTimeout(10000);
         // Ext.Viewport是Sencha Touch自动创建的一个顶级容器
         if (!window.localStorage.getItem('userKey'))
             Ext.Viewport.add(Ext.create('MyApp.view.Start'));

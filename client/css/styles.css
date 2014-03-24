@@ -9,11 +9,11 @@ body {
 }
 */
 
-.center{
+.center {
 	text-align: center;
 }
 
-.startShareBtn {
+.start-share-button {
 	background: url(../images/start_share.png) center center no-repeat;
 	background-size: 100% 100%;
 	width: 10em;
@@ -21,7 +21,7 @@ body {
 	border: none;
 }
 
-.nextBtn {
+.next-button {
 	background: url(../images/next_button.png) center center no-repeat;
 	background-size: 100% 100%;
 	width: 5em;
@@ -29,47 +29,114 @@ body {
 	border: none;
 }
 
-.mainPage {
+.main-page {
 	background: url(../images/main_bk.png) center bottom no-repeat;
 	background-size: 100% auto;
 }
 
-.homeToolbar{
+.home-toolbar {
 	background: #d2d2d2;
 	border-top: 1px solid #ffffff;
 }
 
-
-.homeShreaList img {
-	width:48px;
-	height:48px;
+.home-share-label {
+	display: block;
+	margin: auto;
+	text-align: right;
+	line-height: 4em;
+	height: 4em;
+	vertical-align: middle;
+	background: url(../images/share_list.png) left center no-repeat;
+	background-size: 2em;
+	width: 6.5em;
 }
-.homeShreaList{
-	height:4em;
-	line-height:4em;
+.home-share {
 	border-right: 1px solid #585858;
 	vertical-align: middle;
 }
-
-.homeProfile img {
-	width:48px;
-	height:48px;
+.home-profile-label {
+	display: block;
+	margin: auto;
+	text-align: right;
+	line-height: 4em;
+	height: 4em;
+	vertical-align: middle;
+	background: url(../images/profile.png) left center no-repeat;
+	background-size: 2em;
+	width: 6.5em;
 }
-.homeProfile{
-	height:4em;
-	line-height:4em;
+.home-profile {
 	border-left: 1px solid #ffffff;
 	vertical-align: middle;
 }
+.contract-order {
+	background: #f0f0f0;
+}
+.contract-order-item {
+	background: #f0f0f0;
+	border-right: 1px solid #999999;
+	border-bottom: 1px solid #999999;
+	height: 3em;
+	line-height: 3em;
+	text-align: center;
 
-.homeProfile-label{
-	height:4em;
-	line-height:4em;
-	vertical-align: middle;
 }
 
-.homeShreaList-label{
-	height:4em;
-	line-height:4em;
-	vertical-align: middle;
+.contract-list {
 }
+.contract-list-item {
+	clear: both;
+	display: block;
+	border-bottom: solid 1px #f0f0f0;
+}
+.contract-list-item .image {
+	float: left;
+	background: #000 url(../images/contract_default.png) center center no-repeat;
+	background-size: 100% 100%;
+	display: block;
+	width: 48px;
+	height: 48px;
+	margin: 6px;
+	border: solid 1px #333;
+}
+
+.contract-list-item .name {
+	font-size: 1.2em;
+	display: block;
+	padding: 10px 0px 4px 0px;
+	width: 10em;
+}
+
+.contract-list-item .mobile {
+	display: block;
+	font-size: 0.9em;
+	width: 15em;
+}
+
+.contract-list-item .checked {
+	display: block;
+	float: right;
+	background: url(../images/contract_check.png) center center no-repeat;
+	background-size: 100% 100%;
+	width: 32px;
+	height: 32px;
+	margin-top: 15px;
+	margin-right: 6px;
+}
+
+.contract-list-item .nochecked {
+	display: block;
+	float: right;
+	background: url(../images/contract_nocheck.png) center center no-repeat;
+	background-size: 100% 100%;
+	width: 32px;
+	height: 32px;
+	margin-top: 15px;
+	margin-right: 6px;
+}
+
+.contract-page {
+	background: #fff;
+}
+
+
