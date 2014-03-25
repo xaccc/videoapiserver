@@ -84,12 +84,14 @@ body {
 
 .contract-list {
 }
-.contract-list-item {
+.contract-list-item,
+.contract-list-item-checked {
 	clear: both;
 	display: block;
 	border-bottom: solid 1px #f0f0f0;
 }
-.contract-list-item .image {
+.contract-list-item .image,
+.contract-list-item-checked .image {
 	float: left;
 	background: #000 url(../images/contract_default.png) center center no-repeat;
 	background-size: 100% 100%;
@@ -100,20 +102,22 @@ body {
 	border: solid 1px #333;
 }
 
-.contract-list-item .name {
+.contract-list-item .name,
+.contract-list-item-checked .name {
 	font-size: 1.2em;
 	display: block;
 	padding: 10px 0px 4px 0px;
 	width: 10em;
 }
 
-.contract-list-item .mobile {
+.contract-list-item .mobile,
+.contract-list-item-checked .mobile {
 	display: block;
 	font-size: 0.9em;
 	width: 15em;
 }
 
-.contract-list-item .checked {
+.contract-list-item-checked .checkbox {
 	display: block;
 	float: right;
 	background: url(../images/contract_check.png) center center no-repeat;
@@ -124,7 +128,7 @@ body {
 	margin-right: 6px;
 }
 
-.contract-list-item .nochecked {
+.contract-list-item .checkbox {
 	display: block;
 	float: right;
 	background: url(../images/contract_nocheck.png) center center no-repeat;
