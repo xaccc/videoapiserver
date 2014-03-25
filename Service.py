@@ -498,10 +498,10 @@ class Service(object):
 		for videoInstance in videoListInstance:
 			PosterURLs = []
 			for i in range(0,5):
-				PosterURLs.append("%s/%s_%d.jpg" % (PosterBaseURL, videoInstance['id'], int(i+1)))
+				PosterURLs.append("%s/%s_%d.jpg" % (PosterBaseURL, videoInstance['upload_id'], int(i+1)))
 
 			VideoURLs = []
-			VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['id']))
+			VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['upload_id']))
 			results.append({
 				'VID'   	: videoInstance['upload_id'],
 				'Owner' 	: self.getUserMobile(videoInstance['owner_id']),
@@ -512,6 +512,7 @@ class Service(object):
 				'Describe' 	: videoInstance['describe'],
 				'Tag' 		: videoInstance['tag'],
 				'Duration' 	: videoInstance['duration'],
+				'Published'	: videoInstance['create_time'],
 				'Definition': MediaProbe.definition(videoInstance['video_height']),
 				'PosterURLs': PosterURLs,
 				'VideoURLs'	: VideoURLs,

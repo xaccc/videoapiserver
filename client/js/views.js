@@ -1,6 +1,21 @@
+
+function switchToView(view) {
+    view.on("deactivate", function(oldActiveItem, container, newActiveItem, eOpts) {
+        if (oldActiveItem) {
+            Ext.Viewport.remove(oldActiveItem, true);
+        }
+    });
+    view.setHideAnimation('slideOut');
+    view.setShowAnimation('slide');
+    Ext.Viewport.setActiveItem(view);
+
+}
+
+///////////////////////////////////////////////////////////////////////////////
 //
 // 主页面
 //
+///////////////////////////////////////////////////////////////////////////////
 Ext.define('MyApp.view.Main', {
     extend: 'Ext.Container',
 
@@ -18,7 +33,7 @@ Ext.define('MyApp.view.Main', {
                 baseCls: 'start-share-button',
                 listeners: {
                     tap: function(){
-                        Ext.Viewport.setActiveItem(Ext.create('MyApp.view.Contract'));
+                        switchToView(Ext.create('MyApp.view.Contract'));
                     }
                 }
             },
@@ -38,7 +53,7 @@ Ext.define('MyApp.view.Main', {
                         labelCls: 'home-share-label',
                         listeners: {
                             tap: function(){
-                                Ext.Msg.alert("Fuck!");
+                                switchToView(Ext.create('MyApp.view.VideoList'));
                             }
                         },
                     },
@@ -63,9 +78,11 @@ Ext.define('MyApp.view.Main', {
 });
 
 
+///////////////////////////////////////////////////////////////////////////////
 //
 // 登录，验证短信息界面
 //
+///////////////////////////////////////////////////////////////////////////////
 Ext.define('MyApp.view.Login', {
     extend: 'Ext.Container',
 
@@ -112,7 +129,7 @@ Ext.define('MyApp.view.Login', {
                                 console.log(data);
                                 window.localStorage.setItem('userKey',data.UserKey);
                                 window.localStorage.setItem('userKeyValidityDate',data.ValidityDate);
-                                Ext.Viewport.setActiveItem(Ext.create('MyApp.view.Main'));
+                                switchToView(Ext.create('MyApp.view.Main'));
                             },
                             failure: function(response, opts) {
                                 Ext.Msg.alert('验证码输入错误，请确认后重新输入！');
@@ -126,9 +143,11 @@ Ext.define('MyApp.view.Login', {
     }
 });
 
+///////////////////////////////////////////////////////////////////////////////
 //
 // 输入手机号界面，启动界面
 //
+///////////////////////////////////////////////////////////////////////////////
 Ext.define('MyApp.view.Start', {
     extend: 'Ext.NavigationView',
 
@@ -188,6 +207,17 @@ Ext.define('MyApp.view.Start', {
         }]
     }
 });
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// 联系人页面
+//
+///////////////////////////////////////////////////////////////////////////////
+
+var selectedContractList = new HashMap();
 
 
 Ext.define('ContractItem', {
@@ -250,7 +280,10 @@ Ext.define('ContractOrderItem', {
     },    
 });
 
-var selectedContractList = new HashMap();
+
+
+
+
 
 Ext.define('MyApp.view.Contract', {
     extend: 'Ext.Container',
@@ -293,7 +326,7 @@ Ext.define('MyApp.view.Contract', {
                         ui: 'back',
                         handler: function() {
                             // back main view
-                            Ext.Viewport.setActiveItem(Ext.create('MyApp.view.Main'));
+                            switchToView(Ext.create('MyApp.view.Main'));
                         }
                     },
                     {
@@ -302,7 +335,7 @@ Ext.define('MyApp.view.Contract', {
                         align: 'right',
                         handler: function() {
                             // back main view
-                            Ext.Viewport.setActiveItem(Ext.create('MyApp.view.Main'));
+                            switchToView(Ext.create('MyApp.view.Main'));
                         }
                     }
                 ]
@@ -1019,3 +1052,116 @@ Ext.define('MyApp.view.Contract', {
         ],
     }
 });
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// 分享时间轴
+//
+///////////////////////////////////////////////////////////////////////////////
+Ext.define('MyApp.view.VideoList', {
+    extend: 'Ext.Container',
+
+    config: {
+        id: 'MyApp.view.VideoList',
+        fullscreen: true,
+        cls: 'videolist-page',
+        scrollable: {
+            direction: 'vertical',
+            directionLock: true
+        },
+        listeners: {
+            initialize: function() {
+                this.add(Ext.create('My.VideoList', {id: 'video-list'}));
+            }
+        },
+        items: [
+            {
+                xtype: 'titlebar',
+                id: 'contract-titlebar',
+                docked: 'top',
+                title: '分享记录',
+                items: [
+                    {
+                        xtype: 'button',
+                        text: '返回',
+                        ui: 'back',
+                        handler: function() {
+                            // back main view
+                            switchToView(Ext.create('MyApp.view.Main'));
+                        }
+                    },
+                ]
+            },
+        ]
+    }
+});
+
+
+Ext.define('My.VideoList', {
+    extend: 'Ext.Container',
+
+    config: {
+        id: 'video-list',
+        cls: 'video-list',
+    },
+
+    _offset: 0,
+    _max: 10,
+    initialize: function() {
+        api_list_sharevideo(window.localStorage.getItem('userKey'), this._offset, this._max, {
+                success: function(response){
+                    // 掉转到输入验证码页面
+                    data = JSON.parse(response.responseText);
+                    console.log(data);
+                    for( i = 0; i < data.Results.length; i++) {
+                        video = Ext.create('My.VideoListItem', {
+                            data: {VID: data.Results[i].VID, Duration: data.Results[i].Duration, url: data.Results[i].VideoURLs[0], poster: data.Results[i].PosterURLs[0]},
+                            listeners: {
+                            }
+                        });
+                        Ext.getCmp('video-list').add(video);
+                    }
+                },
+                failure: function(response, opts) {
+                    Ext.Msg.alert('获取数据失败，请稍后重试！');
+                    console.log(response);
+                }
+            });
+    },
+
+});
+
+
+Ext.define('My.VideoListItem', {
+    extend: 'Ext.Container',
+    config: {
+        cls: 'video-list-item',
+        tpl: '<span>{Duration}</span><video src="{url}" poster="{poster}" controls="controls"></video>',
+        listeners: {
+            tap: function(obj){
+            }
+        }
+    },
+
+    initialize: function() {
+        this.callParent();
+        this.element.on({
+            scope      : this,
+            tap        : 'onTap',
+        });
+    },
+
+    onTap: function(e) {
+        if (this.getDisabled()) {
+            return false;
+        }
+
+        this.fireAction('tap', [this, e]);
+    },    
+});
+

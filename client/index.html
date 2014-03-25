@@ -25,11 +25,13 @@ Ext.application({
         autoMaximize: true // 该属性可以设置页面自动最大化（隐藏地址栏）
     },
     launch: function () {
+
+
         // Ext.Viewport是Sencha Touch自动创建的一个顶级容器
         if (!window.localStorage.getItem('userKey'))
-            Ext.Viewport.add(Ext.create('MyApp.view.Start'));
+            switchToView(Ext.create('MyApp.view.Start'));
         else
-            Ext.Viewport.add(Ext.create('MyApp.view.Main'));
+            switchToView(Ext.create('MyApp.view.Main'));
     }
 });
 
