@@ -11,7 +11,7 @@ from random import randint
 import os
 import commands
 import uuid
-import md5
+import hashlib
 import json
 import base64
 
@@ -167,7 +167,7 @@ class Service(object):
 			# 通过用户名/邮箱+密码方式登录
 			#
 			user = db.get("SELECT * FROM `user` WHERE (`login`=%s or `email`=%s ) and password = %s",
-							(data['Id'],data['Id'], md5.new(data['Validate']).hexdigest()))
+							(data['Id'],data['Id'], hashlib.md5.new(data['Validate']).hexdigest()))
 			if user:
 				userId = user['id']
 				isNewUser = False
