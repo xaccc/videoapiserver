@@ -8,6 +8,7 @@ from urlparse import urlsplit
 from datetime import datetime
 from datetime import timedelta
 from ConfigParser import ConfigParser
+from Downloader import Download
 
 from Service import Service
 
@@ -25,6 +26,10 @@ import tornado.httpserver
 import dateutil
 import dateutil.tz
 import dateutil.parser
+import multiprocessing
+import logging
+
+logging.basicConfig(filename = os.path.join(os.getcwd(), 'server.log'), level = logging.DEBUG)
 
 
 class MyJSONEncoder(json.JSONEncoder):
@@ -53,10 +58,11 @@ class MainHandler(tornado.web.RequestHandler):
 			'getvideo'			: self.getvideo,
 			'sharevideo'		: self.sharevideo,
 			'listsharevideo'	: self.listsharevideo,
+			'publishvideo'		: self.publishvideo,
 		}
 
 	def post(self, api):
-		if 'application/json' == self.request.headers['Content-Type']:
+		if 'application/json' in self.request.headers['Content-Type']:
 			self.urlmap.get(api, self.__responseDefault)(json.loads(self.request.body))
 		else:
 			raise tornado.web.HTTPError(400, '数据格式不支持')
@@ -66,7 +72,7 @@ class MainHandler(tornado.web.RequestHandler):
 
 	def __reponseJSON(self, data):
 		self.set_header('Content-Type', 'application/json')
-		self.set_header('Server', 'Video API Server')
+		self.set_header('Server', 'VideoServer')
 		self.write(json.dumps(data, cls=MyJSONEncoder))
 
 	def __has_params(self, data, params):
@@ -396,6 +402,10 @@ class MainHandler(tornado.web.RequestHandler):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
 		self.__reponseJSON(self.service.listsharevideo(data))
+
+	def publishvideo(self, data):
+		multiprocessing.Process(target=Download, args=(data,)).start()
+		pass
 
 
 

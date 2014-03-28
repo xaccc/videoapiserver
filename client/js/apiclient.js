@@ -25,6 +25,16 @@ function api_validate(mobile, device, params){
     }, params));    
 }
 
+function api_userKey(userKey, params){
+    Ext.Ajax.request(Ext.Object.merge({
+        method: 'POST',
+        url: apiBaseURL + '/userkey',
+        jsonData: {
+            'UserKey': userKey
+        }
+    }, params));    
+}
+
 function api_login(id, device, validate, params){
     Ext.Ajax.request(Ext.Object.merge({
         method: 'POST',

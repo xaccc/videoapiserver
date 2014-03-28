@@ -28,10 +28,19 @@ Ext.application({
 
 
         // Ext.Viewport是Sencha Touch自动创建的一个顶级容器
-        if (!window.localStorage.getItem('userKey'))
+        if (window.localStorage.getItem('userKey')) {
+            api_userKey(window.localStorage.getItem('userKey'), 'WebClient', {
+                success: function(response){
+                    // Ext.getCmp('MyApp.view.Start').push(Ext.create('MyApp.view.Login'));
+                    switchToView(Ext.create('MyApp.view.Main'));
+                },
+                failure: function(response, opts) {
+                    switchToView(Ext.create('MyApp.view.Start'));
+                }
+            });
+        } else {
             switchToView(Ext.create('MyApp.view.Start'));
-        else
-            switchToView(Ext.create('MyApp.view.Main'));
+        }
     }
 });
 

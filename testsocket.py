@@ -29,7 +29,7 @@ class Connection(object):
 		self._stream.write(data) 
 
 	def on_close(self):  
-		print "A user has left the chat room.", self._address
+		print "A user has left the chat room. %s", self._address
 		Connection.clients.remove(self)  
 
 class ChatServer(TCPServer):  
