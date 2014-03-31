@@ -53,4 +53,5 @@ command=0
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
 stream = tornado.iostream.IOStream(s)
 stream.connect(("localhost", 9002), send_request)
+#stream.connect(("221.180.20.232", 9002), send_request)
 tornado.ioloop.IOLoop.instance().start()

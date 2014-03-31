@@ -51,7 +51,7 @@ class Connection(object):
 		print "Client connected: %s" % str(self._address)
 
 	def __del__(self):
-		self._lock
+		pass
 
 	def postReadHeader(self):
 		self._command = -1
@@ -74,27 +74,29 @@ class Connection(object):
 		self._stream.read_bytes(bodySize, self.parseBody)
 
 	def parseBody(self, data):
-		self._last = datetime.now()
+		try:
+			self._last = datetime.now()
 
-		if self._command == NOTIFY_COMMAND_REGISTER:
+			if self._command == NOTIFY_COMMAND_REGISTER:
 
-			self._userKey = str(data)
-			self._userId = service.getUserId(self._userKey)
-			self._mobile = service.getUserMobile(self._userId)
+				self._userKey = str(data)
+				self._userId = service.getUserId(self._userKey)
+				self._mobile = service.getUserMobile(self._userId)
 
-			print "Client %s Register UserKey: %s" % (self._mobile, self._userKey)
+				print "Client %s Register UserKey: %s" % (self._mobile, self._userKey)
 
-		elif self._command == NOTIFY_COMMAND_PING:
-			self.postMessage(NOTIFY_COMMAND_PING, data)
+			elif self._command == NOTIFY_COMMAND_PING:
+				self.postMessage(NOTIFY_COMMAND_PING, data)
 
-		else:
-			print "Body: %s %s" % (str(data), self._address)
-
+			else:
+				print "Body: %s %s" % (str(data), self._address)
+		except:
+			self.close()
 
 		self.postReadHeader() # read new packet
 
 
-	def close(self, data):
+	def close(self):
 		self._stream.close()
 
 
@@ -127,7 +129,7 @@ class Connection(object):
 
 	@staticmethod
 	def ping_thread(service):
-		while( not isShutdown.wait(60*30) ):
+		while( not isShutdown.wait(10) ):
 			print 'send ping to %s clients ...' % len(client_set)
 			userKeys = []
 			try:
