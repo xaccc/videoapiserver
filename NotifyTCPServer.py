@@ -83,6 +83,7 @@ class Connection(object):
 				self._userId = service.getUserId(self._userKey)
 				self._mobile = service.getUserMobile(self._userId)
 
+				newNotify.set()
 				print "Client %s Register UserKey: %s" % (self._mobile, self._userKey)
 
 			elif self._command == NOTIFY_COMMAND_PING:
@@ -129,13 +130,11 @@ class Connection(object):
 
 	@staticmethod
 	def ping_thread(service):
-		while( not isShutdown.wait(10) ):
-			print 'send ping to %s clients ...' % len(client_set)
+		while( not isShutdown.wait(60) ):
 			userKeys = []
 			try:
 				client_set_lock.acquire()
 				for (idx,client) in enumerate(client_set):
-					print client._userKey
 					if len(client._userKey) > 0:
 						userKeys.append(client._userKey);
 
@@ -143,7 +142,6 @@ class Connection(object):
 				client_set_lock.release()
 
 			for (idx,userKey) in enumerate(userKeys):
-				print 'send ping to %s ...' % userKey
 				Connection.sendNotify(userKey, NOTIFY_COMMAND_PING, 'hello')
 
 
@@ -168,9 +166,12 @@ class Connection(object):
 								'VID': share['video_id'],
 							}
 							client.postMessage(NOTIFY_COMMAND_SHAREVIDEO, json.dumps(data, cls=MyJSONEncoder))
+							service.shareNotifyed(share['session_id'], share['to_mobile'])
 				finally:
 					client_set_lock.release()
-		pass
+			
+			newNotify.clear()
+
 
 
 class NotifyServer(TCPServer):

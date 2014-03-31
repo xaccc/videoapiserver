@@ -101,6 +101,21 @@ class Service(object):
 		return db.list("SELECT `user`.`mobile` , `share`.* FROM `share` LEFT JOIN `user` ON `share`.`owner_id` = `user`.`id` WHERE `share`.`to_time` >= NOW() - INTERVAL 7 DAY AND `share`.`notify_time` IS NULL")
 
 
+	def shareNotifyed(self, shareId, to_mobile):
+		"""
+		获取共享列表
+		方法：
+			getShareList
+		参数：
+		返回值：
+			[list] – 共享记录
+		"""
+		db = self.__getDB()
+
+		db.update("UPDATE `share` set `notify_time` = NOW() WHERE `session_id` = %s AND `to_mobile` = %s ", (shareId, to_mobile))
+		db.end()
+
+
 	def getUserIdByMobile(self, mobile):
 		"""
 		获取用户ID
