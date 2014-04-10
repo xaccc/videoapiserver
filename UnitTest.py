@@ -12,8 +12,6 @@ from ApiClient import ApiClient
 
 
 
-
-
 if len(sys.argv) > 1:
 
 	device = 'TEST'
@@ -22,7 +20,9 @@ if len(sys.argv) > 1:
 	api = ApiClient()
 	#api = ApiClient(userKey)
 
+	print '==============validate============='
 	print json.dumps(api.validate('18636636365',device),sort_keys=False,indent=4)
+	print '==============login============='
 	print json.dumps(api.login('18636636365',device,'0147258369'),sort_keys=False,indent=4)
 
 	buffer_size = 1024*100
@@ -31,6 +31,7 @@ if len(sys.argv) > 1:
 	filename = sys.argv[1]
 	fsize = os.path.getsize(filename)
 	session = api.uploadSession(fsize)
+	print '==============uploadSession============='
 	print json.dumps(session,sort_keys=False,indent=4)
 
 	f = open(filename, 'rb')
@@ -38,15 +39,9 @@ if len(sys.argv) > 1:
 	uploadId = session['UploadId']
 
 	while True:
-		bdata = f.read(buffer_size)
-		if bdata is None or len(bdata) == 0:
-			break;
-
-		api.upload(uploadId, fsize, offset, bdata)
-		offset += len(bdata)
-
 		p = api.uploadProgress(uploadId)
 		print str(int(p['Saved'] * 100 / p['Length'])) + '%'
+
 
 		if p['Saved'] == p['Length']:
 			print 'Upload complete!'
@@ -72,6 +67,24 @@ if len(sys.argv) > 1:
 			# list 
 			print "============================listShareVideo===================================="
 			print json.dumps(api.listShareVideo(),sort_keys=False,indent=4)
+
+
+			print "============================video_list===================================="
+			print json.dumps(api.video_list(),sort_keys=False,indent=4)
+
+
+		f.seek(p['Saved'],0)
+		bdata = f.read(buffer_size)
+		if bdata is None or len(bdata) == 0:
+			break;
+
+		res = api.upload(uploadId, fsize, offset, bdata)
+		offset += len(bdata)
+		print '==============uploadSession============='
+		print json.dumps(res,sort_keys=False,indent=4)
+
+
+
 
 else:
 	print "Usage: %s <uploadfile> [<buffer_size>]" % sys.argv[0]

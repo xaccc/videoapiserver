@@ -1,0 +1,6 @@
+#!/bin/sh
+
+rm -f *.class
+rm -f *.log
+rm -f *.pid
+rm -r *.pyc

@@ -47,18 +47,36 @@ class MainHandler(tornado.web.RequestHandler):
 	def initialize(self, service):
 		self.service = service
 		self.urlmap = {
-			'validate'			: self.validate,
-			'userkey'			: self.userKey,
-			'login'				: self.login,
+			'validate'			: self.user_validate,
+			'userkey'			: self.user_id,
+			'login'				: self.user_auth,
 			'settings'			: self.settings,
-			'uploadid'			: self.uploadid,
-			'upload_progress'	: self.upload_progress,
-			'upload'			: self.upload,
-			'createvideo'		: self.createvideo,
-			'getvideo'			: self.getvideo,
-			'sharevideo'		: self.sharevideo,
-			'listsharevideo'	: self.listsharevideo,
+			'uploadid'			: self.upload_id,
+			'upload'			: self.upload_data,
+			'createvideo'		: self.video_create,
+			'getvideo'			: self.video_get,
+			'sharevideo'		: self.share_video,
+			'listsharevideo'	: self.share_list,
 			'publishvideo'		: self.publishvideo,
+
+			# 身份认证接口
+			'user_validate'		: self.user_validate,
+			'user_auth'			: self.user_auth,
+			'user_id'			: self.user_id,
+
+			# 上传接口
+			'upload_id'			: self.upload_id,
+			'upload_progress'	: self.upload_progress,
+			'upload_data'		: self.upload_data,
+
+			# 视频相关接口
+			'video_create'		: self.video_create,
+			'video_list'		: self.video_list,
+			'video_get'			: self.video_get,
+
+			# 分享接口
+			'share_video'		: self.share_video,
+			'share_list'		: self.share_list,
 		}
 
 	def post(self, api):
@@ -104,11 +122,11 @@ class MainHandler(tornado.web.RequestHandler):
 	#
 	###########################################################################
 	
-	def userKey(self, data):
+	def user_id(self, data):
 		"""
 		检验userKey是否有效
 		方法：
-			userkey
+			user_id
 		参数：
 			UserKey[string] – 用户登录后的会话ID
 		返回值：
@@ -124,11 +142,11 @@ class MainHandler(tornado.web.RequestHandler):
 			'userId'	: userId
 		})
 	
-	def validate(self, data):
+	def user_validate(self, data):
 		"""
 		发送短信验证码
 		方法：
-			validate
+			user_validate
 		参数：
 			Mobile[string] – 用户手机号码
 			Device[string] – 设备名称
@@ -138,7 +156,7 @@ class MainHandler(tornado.web.RequestHandler):
 		if not self.__has_params(data, ('Mobile', 'Device')):
 			raise tornado.web.HTTPError(400, '参数Error')
 
-		ValidityDate = self.service.validate(data)
+		ValidityDate = self.service.user_validate(data)
 
 		self.__reponseJSON({ 
 			'Now'   		: datetime.now(),
@@ -146,11 +164,11 @@ class MainHandler(tornado.web.RequestHandler):
 		})
 
 
-	def login(self, data):
+	def user_auth(self, data):
 		"""
 		验证用户身份
 		方法：
-			login
+			user_auth
 		参数：
 			Id[string] – 用户手机号码/用户名/绑定邮箱等相关支持方式的Id
 			Device[string] – 登录设备名称
@@ -163,7 +181,7 @@ class MainHandler(tornado.web.RequestHandler):
 		if not self.__has_params(data, ('Id', 'Device', 'Validate')):
 			raise tornado.web.HTTPError(400, '参数Error')
 
-		result = self.service.login(data)
+		result = self.service.user_auth(data)
 		if not result or not result['UserKey']:
 			raise tornado.web.HTTPError(500, '验证码或用户名、密码错误!') 
 
@@ -200,11 +218,11 @@ class MainHandler(tornado.web.RequestHandler):
 
 
 
-	def uploadid(self, data):
+	def upload_id(self, data):
 		"""
 		分配视频ID
 		方法：
-			uploadid
+			upload_id
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			Length[long] –视频字节数，单位BYTES。
@@ -217,7 +235,7 @@ class MainHandler(tornado.web.RequestHandler):
 
 		self.__reponseJSON({
 			'Now'		: datetime.now(),
-			'UploadId'	: self.service.uploadid(data),
+			'UploadId'	: self.service.upload_id(data),
 			'Length'	: data['Length']
 			})
 		pass
@@ -249,11 +267,11 @@ class MainHandler(tornado.web.RequestHandler):
 			})
 		pass
 
-	def upload(self, data):
+	def upload_data(self, data):
 		"""
 		上传视频内容
 		方法：
-			upload
+			upload_data
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			UploadId[string] – 分配的上传会话ID
@@ -268,7 +286,7 @@ class MainHandler(tornado.web.RequestHandler):
 		if not self.__has_params(data, ('UserKey', 'UploadId', 'Offset', 'Data', 'Size')):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
-		length, saved = self.service.upload(data)
+		length, saved = self.service.upload_data(data)
 
 		self.__reponseJSON({
 			'Now'		: datetime.now(),
@@ -279,11 +297,11 @@ class MainHandler(tornado.web.RequestHandler):
 		pass
 
 
-	def createvideo(self, data):
+	def video_create(self, data):
 		"""
 		创建视频信息
 		方法：
-			createvideo
+			video_create
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			UploadId[string] – 分配的上传会话ID
@@ -300,82 +318,17 @@ class MainHandler(tornado.web.RequestHandler):
 
 		self.__reponseJSON({
 			'Now': datetime.now(),
-			'VID': self.service.createvideo(data)
+			'VID': self.service.video_create(data)
 			})
 		pass
 
 
-	def getvideo(self, data):
+
+	def video_list(self, data):
 		"""
-		获取视频信息
+		获取Video列表
 		方法：
-			getvideo
-		参数：
-			UserKey[string] –用户登录后的会话ID。
-			VID[string] – 分配的视频ID
-		返回值：
-			VID[string] – 视频ID
-			Owner[string] – 视频所有者，默认为视频上传/分享者的手机号
-			Title[string] – 视频标题
-			Author[string] – 分享者/创作者名称
-			CreateTime[date] – 创作日期
-			Category[string] – 视频分类
-			Tag[string] – 视频标签，标签内容有半角“,”（逗号）分割
-			Duration[long] – 视频长度
-			Definition[long] – 视频清晰度： 0:流畅，1:标清，2:高清，3:超清
-			PosterURLs[array] – 视频截图URLs，JPG文件，1~5个。
-			VideoURLs[array] – 视频播放URLs，数量参考清晰度(清晰度+1)
-		"""
-		if not self.__has_params(data, ('UserKey', 'VID')):
-			raise tornado.web.HTTPError(400, '参数 Error')
-
-		videoInstance = self.service.getvideo(data)
-		if videoInstance == None:
-			raise tornado.web.HTTPError(404, '视频不存在')
-
-		self.__reponseJSON({
-			'Now'   	: datetime.now(),
-			'VID'   	: data['VID'],
-			'Owner' 	: videoInstance['Owner'],
-			'Title' 	: videoInstance['Title'],
-			'Author' 	: videoInstance['Author'],
-			'CreateTime': videoInstance['CreateTime'],
-			'Category' 	: videoInstance['Category'],
-			'Tag' 		: videoInstance['Tag'],
-			'Duration' 	: videoInstance['Duration'],
-			'Definition': videoInstance['Definition'],
-			'PosterURLs': videoInstance['PosterURLs'],
-			'VideoURLs'	: videoInstance['VideoURLs'],
-			})
-
-
-	def sharevideo(self, data):
-		"""
-		分享视频
-		方法：
-			sharevideo
-		参数：
-			UserKey[string] –用户登录后的会话ID。
-			VID[string] – 分配的视频ID
-			To[Array] – 分享对象列表，分享对象如下定义：
-				Mobile[string] – 分享手机号，必填
-				Name[string] – 分享姓名，可选
-		返回值：
-			Results[Array] – 分享结果对象列表，分享结果对象如下定义：
-				Mobile[string] – 分享手机号
-				Signup[boolean] – 是否注册用户
-		"""
-		if not self.__has_params(data, ('UserKey', 'VID', 'To')):
-			raise tornado.web.HTTPError(400, '参数 Error')
-
-		self.__reponseJSON(self.service.sharevideo(data))
-
-
-	def listsharevideo(self, data):
-		"""
-		获取Portal列表
-		方法：
-			listsharevideo
+			video_list
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			Offset[long] – 列表起始位置。
@@ -401,7 +354,106 @@ class MainHandler(tornado.web.RequestHandler):
 		if not self.__has_params(data, ['UserKey']):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
-		self.__reponseJSON(self.service.listsharevideo(data))
+		self.__reponseJSON(self.service.video_list(data))
+
+
+	def video_get(self, data):
+		"""
+		获取视频信息
+		方法：
+			video_get
+		参数：
+			UserKey[string] –用户登录后的会话ID。
+			VID[string] – 分配的视频ID
+		返回值：
+			VID[string] – 视频ID
+			Owner[string] – 视频所有者，默认为视频上传/分享者的手机号
+			Title[string] – 视频标题
+			Author[string] – 分享者/创作者名称
+			CreateTime[date] – 创作日期
+			Category[string] – 视频分类
+			Tag[string] – 视频标签，标签内容有半角“,”（逗号）分割
+			Duration[long] – 视频长度
+			Definition[long] – 视频清晰度： 0:流畅，1:标清，2:高清，3:超清
+			PosterURLs[array] – 视频截图URLs，JPG文件，1~5个。
+			VideoURLs[array] – 视频播放URLs，数量参考清晰度(清晰度+1)
+		"""
+		if not self.__has_params(data, ('UserKey', 'VID')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		videoInstance = self.service.video_get(data)
+		if videoInstance == None:
+			raise tornado.web.HTTPError(404, '视频不存在')
+
+		self.__reponseJSON({
+			'Now'   	: datetime.now(),
+			'VID'   	: data['VID'],
+			'Owner' 	: videoInstance['Owner'],
+			'Title' 	: videoInstance['Title'],
+			'Author' 	: videoInstance['Author'],
+			'CreateTime': videoInstance['CreateTime'],
+			'Category' 	: videoInstance['Category'],
+			'Tag' 		: videoInstance['Tag'],
+			'Duration' 	: videoInstance['Duration'],
+			'Definition': videoInstance['Definition'],
+			'PosterURLs': videoInstance['PosterURLs'],
+			'VideoURLs'	: videoInstance['VideoURLs'],
+			})
+
+
+	def share_video(self, data):
+		"""
+		分享视频
+		方法：
+			share_video
+		参数：
+			UserKey[string] –用户登录后的会话ID。
+			VID[string] – 分配的视频ID
+			To[Array] – 分享对象列表，分享对象如下定义：
+				Mobile[string] – 分享手机号，必填
+				Name[string] – 分享姓名，可选
+		返回值：
+			Results[Array] – 分享结果对象列表，分享结果对象如下定义：
+				Mobile[string] – 分享手机号
+				Signup[boolean] – 是否注册用户
+		"""
+		if not self.__has_params(data, ('UserKey', 'VID', 'To')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON(self.service.share_video(data))
+
+
+	def share_list(self, data):
+		"""
+		获取Portal列表
+		方法：
+			share_list
+		参数：
+			UserKey[string] –用户登录后的会话ID。
+			Offset[long] – 列表起始位置。
+			Max[long] – 列表最大条数
+		返回值：
+			Count[long] – 列表数量（全部）
+			Offset[long] – 列表起始位置。
+			Max[long] – 列表最大条数
+			Results[Array] – 视频对象列表，视频对象定义如下：
+				VID[string] – 视频ID
+				Owner[string] – 视频所有者，默认为视频上传/分享者的手机号
+				Title[string] – 视频标题
+				Author[string] – 分享者/创作者名称
+				CreateTime[date] – 创作日期
+				ShareTime[date] – 分享日期
+				Category[string] – 视频分类
+				Tag[string] – 视频标签，标签内容有半角,分割
+				Duration[long] – 视频长度
+				Definition[long] – 视频清晰度： 0:流畅，1:标清，2:高清，3:超清
+				PosterURLs[array] – 视频截图URLs，JPG文件
+				VideoURLs[array] – 视频播放URLs，数量参考清晰度(清晰度+1)
+		"""
+		if not self.__has_params(data, ['UserKey']):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON(self.service.share_list(data))
 
 	def publishvideo(self, data):
 		multiprocessing.Process(target=Download, args=(data,)).start()

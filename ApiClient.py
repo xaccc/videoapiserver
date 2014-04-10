@@ -114,6 +114,15 @@ class ApiClient(object):
 
 
 
+	def video_list(self, offset=0, listMax=10):
+		return self.__postJSON(baseURL + '/video_list', {
+				'UserKey'	: self.userKey,
+				'Offset'	: offset,
+				'Max'		: listMax
+				})
+
+
+
 
 
 applicationConfig = ConfigParser()
