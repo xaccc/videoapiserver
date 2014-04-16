@@ -39,3 +39,6 @@ nosetests.xml
 *.tar.gz
 .DS_Store
 
+uploads
+videos
+*.pid

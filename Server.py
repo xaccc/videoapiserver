@@ -507,6 +507,7 @@ def startup(applicationConfig):
 	
 	application = tornado.web.Application([
 		(r"/api/(.*)", MainHandler, dict(service=service)),
+		(r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "./static"}),
 	])
 
 	global http_server
