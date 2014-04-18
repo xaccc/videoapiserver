@@ -61,12 +61,11 @@ class Transcoder(object):
 		从上传位置转移到视频位置，并根据需要进行转码
 		"""
 		media = MediaProbe(fileName)
-		if media.videoCodec() != 'h264' or media.audioCodec() != 'aac':
-			videoBitrate = media.videoBitrate()
-			audioBitrate = media.audioBitrate()
-			code, text = commands.getstatusoutput('avconv -v 0 -i "%s" -map_metadata -1 -vcodec libx264 -b:v %d -acodec aac -strict -2 -b:a %d -y "%s"' % (fileName, videoBitrate, audioBitrate, destFileName))
-		else:
-			code, text = commands.getstatusoutput('avconv -v 0 -i "%s" -map_metadata -1 -vcodec copy -acodec copy -y "%s"' % (fileName, destFileName))
+
+		vcodec = 'copy' if media.videoCodec() == 'h264' else 'libx264 -b:v %d' % media.videoBitrate()
+		acodec = 'copy' if media.audioCodec() == 'aac' else 'aac -strict -2 -b:a %d' % media.audioBitrate()
+
+		code, text = commands.getstatusoutput('avconv -v 0 -i "%s" -map_metadata -1 -vcodec %s -acodec %s -y "%s"' % (fileName, vcodec, acodec, destFileName))
 
 		if code != 0:
 			return False
