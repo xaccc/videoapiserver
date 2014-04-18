@@ -399,6 +399,8 @@ class Service(object):
 			UserKey[string] –用户登录后的会话ID。
 			Offset[long] – 列表起始位置。
 			Max[long] – 列表最大条数
+			Sort[string] – 列表最大条数
+			Order[string] – 列表最大条数
 		返回值：
 			Count[long] – 列表数量（全部）
 			Offset[long] – 列表起始位置。
@@ -421,12 +423,14 @@ class Service(object):
 		db = self.__getDB()
 
 		offset = data.get('Offset', 0)
+		sort = data.get('Sort', 'Published')
+		order = data.get('Order', 'DESC')
 		listMax = min(100, data.get('Max', 10))
 		count = long(db.get('SELECT count(id) as c FROM `video` WHERE `owner_id` = %s', userId).get('c'))
 
 		results = []
 
-		videoListInstance = db.list('SELECT * FROM `video` WHERE `owner_id` = %s ORDER BY Published DESC LIMIT %s,%s', (userId, offset, listMax))
+		videoListInstance = db.list('SELECT * FROM `video` WHERE `owner_id` = %s ORDER BY %s %s LIMIT %s,%s', (userId, sort, order, offset, listMax))
 
 		PosterBaseURL = self.applicationConfig.get('Video','PosterBaseURL')
 		VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
@@ -514,6 +518,33 @@ class Service(object):
 			}
 
 		return None
+
+
+	def video_remove(self, data):
+		"""
+		分享视频
+		方法：
+			video_remove
+		参数：
+			UserKey[string] –用户登录后的会话ID。
+			VID[string] – 分配的视频ID
+			To[Array] – 分享对象列表，分享对象如下定义：
+				Mobile[string] – 分享手机号，必填
+				Name[string] – 分享姓名，可选
+		返回值：
+			VID[string] – 删除的视频ID
+		"""
+		userId = self.getUserId(data['UserKey'])
+		db = self.__getDB()
+
+		videoInstance = db.get('SELECT * FROM `video` WHERE `user_id`=%s and `id` = %s', (userId, data['VID']))
+		if not videoInstance:
+			raise Exception("视频不存在.")
+
+		db.delete("DELETE FROM `video` WHERE `user_id`=%s and `id` = %s", (userId, data['VID']))
+		db.end()
+
+		return {'VID': data['VID']}
 
 
 	def share_video(self, data):

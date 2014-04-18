@@ -333,6 +333,8 @@ class MainHandler(tornado.web.RequestHandler):
 			UserKey[string] –用户登录后的会话ID。
 			Offset[long] – 列表起始位置。
 			Max[long] – 列表最大条数
+			Sort[string] – 列表最大条数(可选)
+			Order[string] – 列表最大条数(可选)
 		返回值：
 			Count[long] – 列表数量（全部）
 			Offset[long] – 列表起始位置。
@@ -399,6 +401,27 @@ class MainHandler(tornado.web.RequestHandler):
 			'PosterURLs': videoInstance['PosterURLs'],
 			'VideoURLs'	: videoInstance['VideoURLs'],
 			})
+
+
+
+	def video_remove(self, data):
+		"""
+		分享视频
+		方法：
+			video_remove
+		参数：
+			UserKey[string] –用户登录后的会话ID。
+			VID[string] – 分配的视频ID
+		返回值：
+			Results[Array] – 分享结果对象列表，分享结果对象如下定义：
+				Mobile[string] – 分享手机号
+				Signup[boolean] – 是否注册用户
+		"""
+		if not self.__has_params(data, ('UserKey', 'VID')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON(self.service.video_remove(data))
+
 
 
 	def share_video(self, data):
