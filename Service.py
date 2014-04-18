@@ -423,7 +423,7 @@ class Service(object):
 		db = self.__getDB()
 
 		offset = data.get('Offset', 0)
-		sort = data.get('Sort', 'Published')
+		sort = data.get('Sort', 'create_time')
 		order = data.get('Order', 'DESC')
 		listMax = min(100, data.get('Max', 10))
 		count = long(db.get('SELECT count(id) as c FROM `video` WHERE `owner_id` = %s', userId).get('c'))
