@@ -522,15 +522,12 @@ class Service(object):
 
 	def video_remove(self, data):
 		"""
-		分享视频
+		删除视频
 		方法：
 			video_remove
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			VID[string] – 分配的视频ID
-			To[Array] – 分享对象列表，分享对象如下定义：
-				Mobile[string] – 分享手机号，必填
-				Name[string] – 分享姓名，可选
 		返回值：
 			VID[string] – 删除的视频ID
 		"""

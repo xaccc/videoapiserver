@@ -73,6 +73,7 @@ class MainHandler(tornado.web.RequestHandler):
 			'video_create'		: self.video_create,
 			'video_list'		: self.video_list,
 			'video_get'			: self.video_get,
+			'video_remove'		: self.video_remove,
 
 			# 分享接口
 			'share_video'		: self.share_video,
@@ -406,16 +407,14 @@ class MainHandler(tornado.web.RequestHandler):
 
 	def video_remove(self, data):
 		"""
-		分享视频
+		删除视频
 		方法：
 			video_remove
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			VID[string] – 分配的视频ID
 		返回值：
-			Results[Array] – 分享结果对象列表，分享结果对象如下定义：
-				Mobile[string] – 分享手机号
-				Signup[boolean] – 是否注册用户
+			VID[string] – 删除的视频ID
 		"""
 		if not self.__has_params(data, ('UserKey', 'VID')):
 			raise tornado.web.HTTPError(400, '参数 Error')
