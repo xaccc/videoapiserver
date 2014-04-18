@@ -534,11 +534,11 @@ class Service(object):
 		userId = self.getUserId(data['UserKey'])
 		db = self.__getDB()
 
-		videoInstance = db.get('SELECT * FROM `video` WHERE `user_id`=%s and `id` = %s', (userId, data['VID']))
+		videoInstance = db.get('SELECT * FROM `video` WHERE `owner_id`=%s and `id` = %s', (userId, data['VID']))
 		if not videoInstance:
 			raise Exception("视频不存在.")
 
-		db.delete("DELETE FROM `video` WHERE `user_id`=%s and `id` = %s", (userId, data['VID']))
+		db.delete("DELETE FROM `video` WHERE `owner_id`=%s and `id` = %s", (userId, data['VID']))
 		db.end()
 
 		return {'VID': data['VID']}
