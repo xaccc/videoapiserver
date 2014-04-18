@@ -430,7 +430,7 @@ class Service(object):
 
 		results = []
 
-		videoListInstance = db.list('SELECT * FROM `video` WHERE `owner_id` = %s ORDER BY %s %s LIMIT %s,%s', (userId, sort, order, offset, listMax))
+		videoListInstance = db.list('SELECT * FROM `video` WHERE `owner_id` = %s ORDER BY `reate_date` DESC LIMIT %s,%s', (userId, offset, listMax))
 
 		PosterBaseURL = self.applicationConfig.get('Video','PosterBaseURL')
 		VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
