@@ -443,7 +443,7 @@ class Service(object):
 			VideoURLs = []
 			VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['upload_id']))
 			results.append({
-				'VID'   	: videoInstance['upload_id'],
+				'VID'   	: videoInstance['id'],
 				'Owner' 	: self.getUserMobile(videoInstance['owner_id']),
 				'Title' 	: videoInstance['title'],
 				'Author' 	: videoInstance['author'],
