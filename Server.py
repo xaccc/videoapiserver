@@ -474,7 +474,7 @@ class MainHandler(tornado.web.RequestHandler):
 
 	def share_list(self, data):
 		"""
-		获取Portal列表
+		获取分享列表
 		方法：
 			share_list
 		参数：
@@ -486,23 +486,18 @@ class MainHandler(tornado.web.RequestHandler):
 			Offset[long] – 列表起始位置。
 			Max[long] – 列表最大条数
 			Results[Array] – 视频对象列表，视频对象定义如下：
+				to_time[date] – 创作日期
+				to_names[date] – 分享日期
 				VID[string] – 视频ID
-				Owner[string] – 视频所有者，默认为视频上传/分享者的手机号
-				Title[string] – 视频标题
-				Author[string] – 分享者/创作者名称
-				CreateTime[date] – 创作日期
-				ShareTime[date] – 分享日期
-				Category[string] – 视频分类
-				Tag[string] – 视频标签，标签内容有半角,分割
-				Duration[long] – 视频长度
-				Definition[long] – 视频清晰度： 0:流畅，1:标清，2:高清，3:超清
-				PosterURLs[array] – 视频截图URLs，JPG文件
-				VideoURLs[array] – 视频播放URLs，数量参考清晰度(清晰度+1)
 		"""
+
 		if not self.__has_params(data, ['UserKey']):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
 		self.__reponseJSON(self.service.share_list(data))
+
+
+
 
 	def publishvideo(self, data):
 		multiprocessing.Process(target=Download, args=(data,)).start()

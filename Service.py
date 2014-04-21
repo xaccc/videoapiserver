@@ -622,7 +622,7 @@ class Service(object):
 
 	def share_list(self, data):
 		"""
-		获取Portal列表
+		获取分享列表
 		方法：
 			share_list
 		参数：
@@ -634,54 +634,26 @@ class Service(object):
 			Offset[long] – 列表起始位置。
 			Max[long] – 列表最大条数
 			Results[Array] – 视频对象列表，视频对象定义如下：
+				to_time[date] – 创作日期
+				to_names[date] – 分享日期
 				VID[string] – 视频ID
-				Owner[string] – 视频所有者，默认为视频上传/分享者的手机号
-				Title[string] – 视频标题
-				Author[string] – 分享者/创作者名称
-				CreateTime[date] – 创作日期
-				ShareTime[date] – 分享日期
-				Category[string] – 视频分类
-				Tag[string] – 视频标签，标签内容有半角,分割
-				Duration[long] – 视频长度
-				Definition[long] – 视频清晰度： 0:流畅，1:标清，2:高清，3:超清
-				PosterURLs[array] – 视频截图URLs，JPG文件
-				VideoURLs[array] – 视频播放URLs，数量参考清晰度(清晰度+1)
 		"""
 		userId = self.getUserId(data['UserKey'])
 		db = self.__getDB()
 
 		offset = data.get('Offset', 0)
 		listMax = min(100, data.get('Max', 10))
-		count = long(db.get('SELECT count(id) as c FROM `video` WHERE `owner_id` = %s', userId).get('c'))
+		count = long(db.get('SELECT count(*) as c FROM `share` WHERE owner_id = %s GROUP BY `session_id`, `video_id`', userId).get('c'))
 
 		results = []
 
-		videoListInstance = db.list('SELECT * FROM `video` WHERE `owner_id` = %s ORDER BY Published DESC LIMIT %s,%s', (userId, offset, listMax))
+		shareListInstance = db.list('SELECT `to_time` , GROUP_CONCAT(  `to_name` ) to_names, `video_id` FROM `share` WHERE owner_id = %s GROUP BY `session_id`, `video_id` ORDER BY `to_time` DESC LIMIT %s,%s', (userId, offset, listMax))
 
-		PosterBaseURL = self.applicationConfig.get('Video','PosterBaseURL')
-		VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
-
-		for videoInstance in videoListInstance:
-			PosterURLs = []
-			for i in range(0,5):
-				PosterURLs.append("%s/%s_%d.jpg" % (PosterBaseURL, videoInstance['upload_id'], int(i+1)))
-
-			VideoURLs = []
-			VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['upload_id']))
+		for shareInstance in shareListInstance:
 			results.append({
-				'VID'   	: videoInstance['upload_id'],
-				'Owner' 	: self.getUserMobile(videoInstance['owner_id']),
-				'Title' 	: videoInstance['title'],
-				'Author' 	: videoInstance['author'],
-				'CreateTime': videoInstance['create_date'],
-				'Category' 	: videoInstance['category'],
-				'Describe' 	: videoInstance['describe'],
-				'Tag' 		: videoInstance['tag'],
-				'Duration' 	: videoInstance['duration'],
-				'Published'	: videoInstance['create_time'],
-				'Definition': MediaProbe.definition(videoInstance['video_height']),
-				'PosterURLs': PosterURLs,
-				'VideoURLs'	: VideoURLs,
+				'to_time'	: shareInstance['to_time'],
+				'to_names'	: shareInstance['to_names'],
+				'VID'		: shareInstance['video_id'],
 			})
 
 		return {
