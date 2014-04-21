@@ -24,6 +24,11 @@ if len(sys.argv) > 1:
 	print json.dumps(api.validate('18636636365',device),sort_keys=False,indent=4)
 	print '==============login============='
 	print json.dumps(api.login('18636636365',device,'0147258369'),sort_keys=False,indent=4)
+	print '==============user_id============='
+	print json.dumps(api.user_id(),sort_keys=False,indent=4)
+
+	exit() 
+
 
 	buffer_size = 1024*100
 	if len(sys.argv) > 2:

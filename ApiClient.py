@@ -59,6 +59,11 @@ class ApiClient(object):
 		self.userKey = result['UserKey'] if result and result['UserKey'] else ''
 		return result
 
+	def user_id(self):
+		return self.__postJSON(baseURL + '/userkey', {
+				'UserKey'	: self.userKey,
+				})
+
 
 	def uploadSession(self,length):
 		return self.__postJSON(baseURL + '/uploadid', {

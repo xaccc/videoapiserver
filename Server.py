@@ -98,8 +98,13 @@ class MainHandler(tornado.web.RequestHandler):
 	def __has_params(self, data, params):
 		if not isinstance(data, dict):
 			return False
+
+		if isinstance(params, str):
+			return data.has_key(params)
+
 		for p in params:
-			if not data.has_key(p):
+			print p
+			if not data.has_key(str(p)):
 				return False
 		return True
 
@@ -134,6 +139,7 @@ class MainHandler(tornado.web.RequestHandler):
 		返回值：
 			UserId[String] – 用户ID
 		"""
+
 		if not self.__has_params(data, ('UserKey')):
 			raise tornado.web.HTTPError(400, '参数Error')
 
