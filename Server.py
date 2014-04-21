@@ -73,6 +73,7 @@ class MainHandler(tornado.web.RequestHandler):
 			'video_create'		: self.video_create,
 			'video_list'		: self.video_list,
 			'video_get'			: self.video_get,
+			'video_update'		: self.video_update,
 			'video_remove'		: self.video_remove,
 
 			# 分享接口
@@ -323,6 +324,32 @@ class MainHandler(tornado.web.RequestHandler):
 			})
 		pass
 
+
+
+	def video_update(self, data):
+		"""
+		更新视频信息
+		方法：
+			video_update
+		参数：
+			UserKey[string] –用户登录后的会话ID。
+			VID[string] – 视频ID
+			Title[string] – 视频标题
+			Author[string] – 分享者/创作者名称
+			CreateTime[date] – 创作日期
+			Category[string] – 视频分类
+			Tag[string] – 视频标签，标签内容有半角,分割
+		返回值：
+			VID[string] – 视频ID
+		"""
+		if not self.__has_params(data, ('UserKey', 'VID')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			'VID': self.service.video_update(data)
+			})
+		pass
 
 
 	def video_list(self, data):

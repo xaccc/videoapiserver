@@ -388,6 +388,41 @@ class Service(object):
 		return None
 
 
+	def video_update(self,data):
+		"""
+		更新视频信息
+		方法：
+			video_update
+		参数：
+			UserKey[string] –用户登录后的会话ID。
+			VID[string] – 视频ID
+			Title[string] – 视频标题
+			Author[string] – 分享者/创作者名称
+			CreateTime[date] – 创作日期
+			Category[string] – 视频分类
+			Describe[string] – 视频描述
+			Tag[string] – 视频标签，标签内容有半角“,”（逗号）分割
+		返回值：
+			VID[string] – 视频ID
+		"""
+
+		userId = self.getUserId(data['UserKey'])
+
+		db.update("UPDATE `video` set `title` = %s, `author` = %s, `create_date` = %s, `category` = %s, `describe` = %s, `tag` = %s  WHERE `id` = %s AND `owner_id` = %s ", (
+			data.get('Title', ''),
+			data.get('Author', ''),
+			data.get('CreateTime', ''),
+			data.get('Category', ''),
+			data.get('Describe', ''),
+			data.get('Tag', ''),
+			data.get('VID', ''),
+			userId
+			))
+		db.end()
+			
+		return data.get('VID', '')
+
+
 
 
 	def video_list(self, data):
