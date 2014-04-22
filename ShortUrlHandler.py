@@ -26,6 +26,9 @@ class ShortUrlHandler(tornado.web.RequestHandler):
 		urlInstance = getDB().get(r"SELECT * FROM `short_urls` WHERE `id`=%s", num)
 		if urlInstance:
 			self.redirect(urlInstance['url'])
+			# log
+			db.save(r"INSERT INTO `short_urls_log` (`url_id`) VALUES (%s)", (num))
+			db.end()
 		else:
 			raise tornado.web.HTTPError(404)
 
