@@ -43,6 +43,20 @@ def getDB():
 				'db'    : __config.get('Database','Database')})
 
 
+def getUrl(shortUrl):
+	result = None
+
+	if shortUrl.index(__short_url_prefix) == 0:
+		num = NumberCodec.decode(shortUrl[len(__short_url_prefix):].split('?')[0])
+		db = getDB()
+		# first find
+		urlInstance = db.get(r"SELECT * FROM `short_urls` WHERE `id`=%s", num)
+		if urlInstance:
+			result = urlInstance['url']
+
+	return result
+
+
 def getShortUrl(url):
 	urlId = 0
 	db = getDB()

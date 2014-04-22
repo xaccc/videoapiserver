@@ -8,7 +8,7 @@ from ConfigParser import ConfigParser
 
 from Downloader import Download
 from Service import Service
-from ShortUrlHandler import ShortUrlHandler
+from ShortUrlHandler import ShortUrlHandler, getShortUrl, getUrl
 
 import os,logging
 import uuid, hashlib, json
@@ -69,6 +69,10 @@ class MainHandler(tornado.web.RequestHandler):
 			# 分享接口
 			'share_video'		: self.share_video,
 			'share_list'		: self.share_list,
+
+			# 短地址接口
+			'short_url'			: self.short_url,
+			'short_url_get'		: self.short_url_get,
 		}
 
 	def post(self, api):
@@ -534,6 +538,44 @@ class MainHandler(tornado.web.RequestHandler):
 		self.__reponseJSON(self.service.share_list(data))
 
 
+	def short_url(self, data):
+		"""
+		获取短地址
+		方法：
+			short_url
+		参数：
+			URL[string] – 需要转换的URL
+		返回值：
+			URL[string] – 转换的URL
+			SHORT_URL[string] – 短URL
+		"""
+		if not self.__has_params(data, ('URL')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON({
+			'URL'		: data.get('URL'),
+			'SHORT_URL'	: getShortUrl(data.get('URL'))
+		})
+
+
+	def short_url_get(self, data):
+		"""
+		通过短地址获取原URL
+		方法：
+			short_url_get
+		参数：
+			URL[string] – 短URL
+		返回值：
+			URL[string] – 原URL
+			SHORT_URL[string] – 短URL
+		"""
+		if not self.__has_params(data, ('URL')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON({
+			'URL'		: getUrl(str(data.get('URL'))),
+			'SHORT_URL'	: data.get('URL')
+		})
 
 
 	def publishvideo(self, data):

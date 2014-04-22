@@ -6,6 +6,7 @@ from MySQL import MySQL
 from MediaProbe import MediaProbe
 from Transcoder import Transcoder
 from random import randint
+from ShortUrlHandler import getShortUrl
 
 import os
 import commands
@@ -577,7 +578,6 @@ class Service(object):
 
 		if videoInstance:
 			VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
-			from ShortUrlHandler import getShortUrl
 			return {
 				'VID'   : videoInstance['id'],
 				'URL'	: getShortUrl("%s/%s.mp4" % (VideoBaseURL,videoInstance['upload_id']))
@@ -669,7 +669,7 @@ class Service(object):
 			Max[long] – 列表最大条数
 			Results[Array] – 视频对象列表，视频对象定义如下：
 				to_time[date] – 创作日期
-				to_names[date] – 分享日期
+				to_name[date] – 分享日期
 				VID[string] – 视频ID
 		"""
 		userId = self.getUserId(data['UserKey'])
@@ -677,17 +677,18 @@ class Service(object):
 
 		offset = data.get('Offset', 0)
 		listMax = min(100, data.get('Max', 10))
-		count = long(db.get('SELECT COUNT(*) as c FROM (SELECT video_id FROM `share` WHERE owner_id = %s GROUP BY `session_id`, `video_id`) a', userId).get('c'))
+		count = long(db.get('SELECT COUNT(*) as c FROM `share_list` WHERE `owner_id` = %s or `to_user_id` = %s', (userId,userId)).get('c'))
 
 		results = []
 
-		shareListInstance = db.list('SELECT `to_time` , GROUP_CONCAT(  `to_name` ) to_names, `video_id` FROM `share` WHERE owner_id = %s GROUP BY `session_id`, `video_id` ORDER BY `to_time` DESC LIMIT %s,%s', (userId, offset, listMax))
+		shareListInstance = db.list('SELECT * FROM `share_list` WHERE `owner_id` = %s or `to_user_id` = %s ORDER BY `to_time` DESC LIMIT %s,%s', (userId, userId, offset, listMax))
 
 		for shareInstance in shareListInstance:
 			results.append({
-				'to_time'	: shareInstance['to_time'],
-				'to_names'	: shareInstance['to_names'],
+				'ToTime'	: shareInstance['to_time'],
+				'ToName'	: shareInstance['to_name'],
 				'VID'		: shareInstance['video_id'],
+				'Flag'		: shareInstance['flag'],
 			})
 
 		return {

@@ -138,6 +138,17 @@ class ApiClient(object):
 				})
 
 
+	def short_url(self, url):
+		return self.__postJSON(baseURL + '/short_url', {
+				'URL' : url
+				})
+
+	def short_url_get(self, shortUrl):
+		return self.__postJSON(baseURL + '/short_url_get', {
+				'URL' : shortUrl
+				})
+
+
 
 
 
@@ -232,5 +243,10 @@ if __name__ == '__main__':
 		print json.dumps(api.video_dwz(videoId),sort_keys=False,indent=4)
 
 		# video_qrcode
-		print "============================video_qrcode===================================="
-		print json.dumps(api.video_qrcode(videoId),sort_keys=False,indent=4)
+		print "============================short_url===================================="
+		surl = api.short_url(video_list['Results'][0]['VideoURLs'][0])
+		print json.dumps(surl,sort_keys=False,indent=4)
+
+
+		print "============================short_url_get===================================="
+		print json.dumps(api.short_url_get(surl['SHORT_URL']),sort_keys=False,indent=4)
