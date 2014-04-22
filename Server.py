@@ -2,31 +2,19 @@
 #-*- encoding: utf-8 -*-
 
 
-from datetime import date
-from urlparse import urljoin
-from urlparse import urlsplit
-from datetime import datetime
-from datetime import timedelta
+from datetime import date,datetime,timedelta
+from urlparse import urljoin,urlsplit
 from ConfigParser import ConfigParser
+
 from Downloader import Download
-
 from Service import Service
+from ShortUrlHandler import ShortUrlHandler
 
-import os
-import uuid
-import json
-import time
-import signal
-import logging
-import hashlib
-import httplib
-import tornado.web
-import tornado.ioloop
-import tornado.httpserver
-import dateutil
-import dateutil.tz
-import dateutil.parser
-import multiprocessing
+import os,logging
+import uuid, hashlib, json
+import time, signal, multiprocessing
+import httplib, tornado.web, tornado.ioloop, tornado.httpserver
+import dateutil, dateutil.tz, dateutil.parser
 import logging
 
 logging.basicConfig(filename = os.path.join(os.getcwd(), 'server.log'), level = logging.DEBUG)
@@ -464,7 +452,7 @@ class MainHandler(tornado.web.RequestHandler):
 		"""
 		获取视频播放短地址
 		方法：
-			video_dwz
+			video_qrcode
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			VID[string] – 分配的视频ID
@@ -599,6 +587,7 @@ def startup(applicationConfig):
 	service = Service(applicationConfig)
 	
 	application = tornado.web.Application([
+		(r"/s/(.*)", ShortUrlHandler),
 		(r"/api/(.*)", MainHandler, dict(service=service)),
 		(r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "./static"}),
 	])

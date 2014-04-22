@@ -1,13 +1,11 @@
 #coding=utf-8
 #-*- encoding: utf-8 -*-
 
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from MySQL import MySQL
 from MediaProbe import MediaProbe
 from Transcoder import Transcoder
 from random import randint
-from dwz import dwz
 
 import os
 import commands
@@ -576,11 +574,13 @@ class Service(object):
 		userId = self.getUserId(data['UserKey'])
 		db = self.__getDB()
 		videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
+
 		if videoInstance:
 			VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
+			from ShortUrlHandler import getShortUrl
 			return {
 				'VID'   : videoInstance['id'],
-				'URL'	: dwz("%s/%s.mp4" % (VideoBaseURL,videoInstance['upload_id']))
+				'URL'	: getShortUrl("%s/%s.mp4" % (VideoBaseURL,videoInstance['upload_id']))
 			}
 
 		return None
