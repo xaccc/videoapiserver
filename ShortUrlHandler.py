@@ -22,8 +22,9 @@ class ShortUrlHandler(tornado.web.RequestHandler):
 
 	def get(self, numStr):
 		num = NumberCodec.decode(numStr)
+		db = getDB()
 		# first find
-		urlInstance = getDB().get(r"SELECT * FROM `short_urls` WHERE `id`=%s", num)
+		urlInstance = db.get(r"SELECT * FROM `short_urls` WHERE `id`=%s", num)
 		if urlInstance:
 			self.redirect(urlInstance['url'])
 			# log
