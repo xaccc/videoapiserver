@@ -13,6 +13,7 @@ def dwz(url):
     d = json.loads(response.read())
     if d['status'] != 0:
         return None
+        
     return str(d['tinyurl'])
 
 

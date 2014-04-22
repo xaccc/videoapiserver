@@ -7,6 +7,7 @@ from MySQL import MySQL
 from MediaProbe import MediaProbe
 from Transcoder import Transcoder
 from random import randint
+from dwz import dwz
 
 import os
 import commands
@@ -451,6 +452,7 @@ class Service(object):
 				Category[string] – 视频分类
 				Tag[string] – 视频标签，标签内容有半角,分割
 				Duration[long] – 视频长度
+				Published[string] - 发布时间
 				Definition[long] – 视频清晰度： 0:流畅，1:标清，2:高清，3:超清
 				PosterURLs[array] – 视频截图URLs，JPG文件
 				VideoURLs[array] – 视频播放URLs，数量参考清晰度(清晰度+1)
@@ -522,6 +524,7 @@ class Service(object):
 			Tag[string] – 视频标签，标签内容有半角“,”（逗号）分割
 			Duration[long] – 视频长度
 			Definition[long] – 视频清晰度： 0:流畅，1:标清，2:高清，3:超清
+			Published[string] - 发布时间
 			PosterURLs[array] – 视频截图URLs，JPG文件，1~5个。
 			VideoURLs[array] – 视频播放URLs，数量参考清晰度(清晰度+1)
 		"""
@@ -548,9 +551,37 @@ class Service(object):
 				'Describe' 	: videoInstance['describe'],
 				'Tag' 		: videoInstance['tag'],
 				'Duration' 	: videoInstance['duration'],
+				'Published'	: videoInstance['create_time'],
 				'Definition': MediaProbe.definition(videoInstance['video_height']),
 				'PosterURLs': PosterURLs,
 				'VideoURLs'	: VideoURLs,
+			}
+
+		return None
+
+
+	def video_dwz(self, data):
+		"""
+		获取视频播放短地址
+		方法：
+			video_dwz
+		参数：
+			UserKey[string] –用户登录后的会话ID。
+			VID[string] – 分配的视频ID
+		返回值：
+			VID[string] – 视频ID
+			URL[string] – 视频短地址
+		"""
+		userId = self.getUserId(data['UserKey'])
+		db = self.__getDB()
+		videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
+		if videoInstance:
+			VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
+			VideoURLs = []
+			VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['upload_id']))
+			return {
+				'VID'   : videoInstance['id'],
+				'URL'	: dwz("%s/%s.mp4" % (VideoBaseURL,videoInstance['upload_id']))
 			}
 
 		return None
@@ -617,6 +648,9 @@ class Service(object):
 					'Mobile': to.get('Mobile'),
 					'Signup': toUserId != None
 					})
+
+		import NotifyTCPServer
+		NotifyTCPServer.send_to_server_newshare(userId)
 
 		return {'SessionId': sessionId, 'Results': results}
 

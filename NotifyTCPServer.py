@@ -6,6 +6,7 @@ import threading, time
 import struct
 import signal
 import json
+import socket
 
 from datetime import datetime
 from tornado.tcpserver import TCPServer
@@ -23,9 +24,29 @@ PACKET_HEADER_LEN = 6
 NOTIFY_COMMAND_PING = 1
 NOTIFY_COMMAND_REGISTER = 2
 NOTIFY_COMMAND_SHAREVIDEO = 3
+NOTIFY_COMMAND_NEWSHARED = 4
 
 client_set = set()
 client_set_lock = threading.Lock()
+
+
+def send_to_server_newshare(userId):
+	send_to_server(NOTIFY_COMMAND_NEWSHARED, userId)
+
+
+def send_to_server(cmd, data):
+	applicationConfig = ConfigParser()
+	applicationConfig.read('Config.ini')
+
+	host = applicationConfig.get('NotifyServer','IP')
+	port = applicationConfig.getint('NotifyServer','Listen')
+
+	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	sock.connect((host, port))
+	sock.send(struct.pack(">2sHH", "NT", cmd, len(data)))
+	sock.send(data)
+	time.sleep(1)
+	sock.close()
 
 class Connection(object):
 
@@ -83,11 +104,15 @@ class Connection(object):
 				self._userId = service.getUserId(self._userKey)
 				self._mobile = service.getUserMobile(self._userId)
 
-				newNotify.set()
+				newNotify.set() # send new notify
 				print "Client %s Register UserKey: %s" % (self._mobile, self._userKey)
 
 			elif self._command == NOTIFY_COMMAND_PING:
 				self.postMessage(NOTIFY_COMMAND_PING, data)
+
+			elif self._command == NOTIFY_COMMAND_NEWSHARED:
+				newNotify.set() # send new notify
+				print "newshare: %s " % (data)
 
 			else:
 				print "Body: %s %s" % (str(data), self._address)
@@ -152,7 +177,7 @@ class Connection(object):
 				break; # exit thread
 
 			newNotify.wait(30)
-			# 5sec 强制获取通知信息 
+			# 5sec 强制获取通知信息
 			sharelist = service.getShareList()
 			for share in sharelist:
 				try:
@@ -169,7 +194,7 @@ class Connection(object):
 							service.shareNotifyed(share['session_id'], share['to_mobile'])
 				finally:
 					client_set_lock.release()
-			
+
 			newNotify.clear()
 
 
@@ -180,12 +205,15 @@ class NotifyServer(TCPServer):
 		Connection(stream, address)
 
 
+
+
+
 isShutdown = threading.Event()
 newNotify = threading.Event()
 
-	
+
 def sig_handler(sig, frame):
-	isShutdown.set()	
+	isShutdown.set()
 	IOLoop.instance().add_callback(shutdown)
 
 
@@ -237,7 +265,7 @@ def startup():
 	# server = NotifyServer()
 	# server.add_sockets(sockets)
 	# IOLoop.instance().start()
-	
+
 	global server
 	server = NotifyServer()
 	server.listen(port,host)

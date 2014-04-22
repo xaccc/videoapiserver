@@ -75,6 +75,8 @@ class MainHandler(tornado.web.RequestHandler):
 			'video_get'			: self.video_get,
 			'video_update'		: self.video_update,
 			'video_remove'		: self.video_remove,
+			'video_dwz'			: self.video_dwz,
+			'video_qrcode'		: self.video_qrcode,
 
 			# 分享接口
 			'share_video'		: self.share_video,
@@ -437,6 +439,48 @@ class MainHandler(tornado.web.RequestHandler):
 			})
 
 
+	def video_dwz(self, data):
+		"""
+		获取视频播放短地址
+		方法：
+			video_dwz
+		参数：
+			UserKey[string] –用户登录后的会话ID。
+			VID[string] – 分配的视频ID
+		返回值：
+			VID[string] – 视频ID
+			URL[string] – 视频短地址
+		"""
+		if not self.__has_params(data, ('UserKey', 'VID')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		videoInstance = self.service.video_dwz(data)
+		if videoInstance == None:
+			raise tornado.web.HTTPError(404, '视频不存在')
+
+		self.__reponseJSON(videoInstance)
+
+
+	def video_qrcode(self, data):
+		"""
+		获取视频播放短地址
+		方法：
+			video_dwz
+		参数：
+			UserKey[string] –用户登录后的会话ID。
+			VID[string] – 分配的视频ID
+		返回值：
+			VID[string] – 视频ID
+			URL[string] – 视频短地址
+		"""
+		if not self.__has_params(data, ('UserKey', 'VID')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		videoInstance = self.service.video_dwz(data)
+		if videoInstance == None:
+			raise tornado.web.HTTPError(404, '视频不存在')
+
+		self.__reponseJSON(videoInstance)
 
 	def video_remove(self, data):
 		"""
