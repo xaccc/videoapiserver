@@ -105,7 +105,6 @@ class MainHandler(tornado.web.RequestHandler):
 			return data.has_key(params)
 
 		for p in params:
-			print p
 			if not data.has_key(str(p)):
 				return False
 		return True

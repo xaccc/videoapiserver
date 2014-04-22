@@ -7,13 +7,14 @@ import urllib
 import urllib2
 
 def dwz(url):
+    print "dwz: %s" % url
     req = urllib2.Request("http://dwz.cn/create.php")
     opener = urllib2.build_opener()
     response = opener.open(req, urllib.urlencode({'url': url}))
     d = json.loads(response.read())
     if d['status'] != 0:
         return None
-        
+
     return str(d['tinyurl'])
 
 

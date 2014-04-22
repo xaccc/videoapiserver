@@ -28,6 +28,7 @@ class Service(object):
 	def __del__(self):
 		pass
 
+
 	def __getDB(self):
 		return MySQL({
 					'host'	: self.applicationConfig.get('Database','Host'),
@@ -381,7 +382,7 @@ class Service(object):
 			result = db.save("""INSERT INTO `video` (`id`, `upload_id`, `owner_id`, `duration`, `video_width`, `video_height`, `video_bitrate`, `title`, `author`, `create_date`, `category`, `describe`) 
 								VALUES (%s,%s,%s,%s,%s, %s,%s,%s,%s,%s, %s,%s)""",
 							(newId, data['UploadId'], userId, media.duration(), media.videoWidth(), media.videoHeight(), media.videoBitrate(), 
-							data.get('Title'),data.get('Author'),data.get('CreateTime'),data.get('Category'),data.get('Describe')))
+							data.get('Title', ''),data.get('Author', ''),data.get('CreateTime', ''),data.get('Category', ''),data.get('Describe', '')))
 			db.end()
 			os.remove(fileName)
 			return newId
@@ -577,8 +578,6 @@ class Service(object):
 		videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
 		if videoInstance:
 			VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
-			VideoURLs = []
-			VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['upload_id']))
 			return {
 				'VID'   : videoInstance['id'],
 				'URL'	: dwz("%s/%s.mp4" % (VideoBaseURL,videoInstance['upload_id']))
@@ -678,7 +677,7 @@ class Service(object):
 
 		offset = data.get('Offset', 0)
 		listMax = min(100, data.get('Max', 10))
-		count = long(db.get('SELECT count(*) as c FROM `share` WHERE owner_id = %s GROUP BY `session_id`, `video_id`', userId).get('c'))
+		count = long(db.get('SELECT COUNT(*) as c FROM (SELECT video_id FROM `share` WHERE owner_id = %s GROUP BY `session_id`, `video_id`) a', userId).get('c'))
 
 		results = []
 

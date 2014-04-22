@@ -69,6 +69,14 @@ if len(sys.argv) > 1:
 					{'Mobile': '18636638800', 'Name': '薛博'},
 					]),sort_keys=False,indent=4)
 
+			# dwz
+			print "============================shreaVideo===================================="
+			print json.dumps(api.video_dwz(videoId),sort_keys=False,indent=4)
+
+			# qrcode
+			print "============================shreaVideo===================================="
+			print json.dumps(api.video_qrcode(videoId),sort_keys=False,indent=4)
+
 			# list 
 			print "============================listShareVideo===================================="
 			print json.dumps(api.listShareVideo(),sort_keys=False,indent=4)

@@ -43,15 +43,15 @@ class ApiClient(object):
 		return None
 
 
-	def validate(self,mobile,device):
-		return self.__postJSON(baseURL + '/validate', {
+	def user_validate(self,mobile,device):
+		return self.__postJSON(baseURL + '/user_validate', {
 				'Mobile'	: mobile,
 				'Device'	: device,
 				})
 
 
-	def login(self,id,device,validate):
-		result = self.__postJSON(baseURL + '/login', {
+	def user_auth(self,id,device,validate):
+		result = self.__postJSON(baseURL + '/user_auth', {
 					'Id'		: id,
 					'Device'	: device,
 					'Validate'	: validate,
@@ -60,27 +60,27 @@ class ApiClient(object):
 		return result
 
 	def user_id(self):
-		return self.__postJSON(baseURL + '/userkey', {
+		return self.__postJSON(baseURL + '/user_id', {
 				'UserKey'	: self.userKey,
 				})
 
 
-	def uploadSession(self,length):
-		return self.__postJSON(baseURL + '/uploadid', {
+	def upload_id(self,length):
+		return self.__postJSON(baseURL + '/upload_id', {
 				'UserKey'	: self.userKey,
 				'Length'	: length,
 				})
 
 
-	def uploadProgress(self,id):
+	def upload_progress(self,id):
 		return self.__postJSON(baseURL + '/upload_progress', {
 				'UserKey'	: self.userKey,
 				'UploadId'	: id,
 				})
 
 
-	def upload(self,id, length, offset, bdata):
-		return self.__postJSON(baseURL + '/upload', {
+	def upload_data(self,id, length, offset, bdata):
+		return self.__postJSON(baseURL + '/upload_data', {
 				'UserKey'	: self.userKey,
 				'UploadId'	: id,
 				'Length'	: length,
@@ -88,35 +88,6 @@ class ApiClient(object):
 				'Size'		: len(bdata),
 				'Data'		: base64.b64encode(bdata),
 				})
-
-
-	def createVideo(self,id):
-		return self.__postJSON(baseURL + '/createvideo', {
-				'UserKey'	: self.userKey,
-				'UploadId'	: id,
-				})
-
-
-	def getVideo(self,id):
-		return self.__postJSON(baseURL + '/getvideo', {
-				'UserKey'	: self.userKey,
-				'VID'		: id,
-				})
-
-	def shreaVideo(self, id, toList):
-		return self.__postJSON(baseURL + '/sharevideo', {
-				'UserKey'	: self.userKey,
-				'VID'		: id,
-				'To'		: toList
-				})
-
-	def listShareVideo(self, offset=0, listMax=10):
-		return self.__postJSON(baseURL + '/listsharevideo', {
-				'UserKey'	: self.userKey,
-				'Offset'	: offset,
-				'Max'		: listMax
-				})
-
 
 
 	def video_list(self, offset=0, listMax=10):
@@ -127,9 +98,139 @@ class ApiClient(object):
 				})
 
 
+	def video_create(self,id):
+		return self.__postJSON(baseURL + '/video_create', {
+				'UserKey'	: self.userKey,
+				'UploadId'	: id,
+				})
+
+
+	def video_get(self,id):
+		return self.__postJSON(baseURL + '/video_get', {
+				'UserKey'	: self.userKey,
+				'VID'		: id,
+				})
+
+	def video_dwz(self, vid):
+		return self.__postJSON(baseURL + '/video_dwz', {
+				'UserKey'	: self.userKey,
+				'VID'		: vid
+				})
+
+	def video_qrcode(self, vid):
+		return self.__postJSON(baseURL + '/video_qrcode', {
+				'UserKey'	: self.userKey,
+				'VID'		: vid
+				})
+
+	def share_video(self, id, toList):
+		return self.__postJSON(baseURL + '/share_video', {
+				'UserKey'	: self.userKey,
+				'VID'		: id,
+				'To'		: toList
+				})
+
+	def share_list(self, offset=0, listMax=10):
+		return self.__postJSON(baseURL + '/share_list', {
+				'UserKey'	: self.userKey,
+				'Offset'	: offset,
+				'Max'		: listMax
+				})
+
+
+
+
+
 
 
 
 applicationConfig = ConfigParser()
 applicationConfig.read('Config.ini')
 baseURL = applicationConfig.get('Test', 'baseURL')
+
+
+
+if __name__ == '__main__':
+	# Unit Test
+	api = ApiClient()
+	#api = ApiClient(userKey)
+
+
+	# test user_*
+	device = 'TEST'
+	print '==============user_validate============='
+	print json.dumps(api.user_validate('18636636365',device),sort_keys=False,indent=4)
+	print '==============user_auth============='
+	print json.dumps(api.user_auth('18636636365',device,'0147258369'),sort_keys=False,indent=4)
+	print '==============user_id============='
+	print json.dumps(api.user_id(),sort_keys=False,indent=4)
+
+
+
+	# test upload file
+	if len(sys.argv) > 1:
+		filename = sys.argv[1]
+		fsize = os.path.getsize(filename)
+		session = api.upload_id(fsize)
+		print '==============upload_id============='
+		print json.dumps(session,sort_keys=False,indent=4)
+
+		f = open(filename, 'rb')
+		offset = 0L
+		uploadId = session['UploadId']
+
+		while True:
+			p = api.upload_progress(uploadId)
+			print str(int(p['Saved'] * 100 / p['Length'])) + '%'
+
+			if p['Saved'] == p['Length']:
+				print 'Upload complete!'
+
+				print "============================video_create===================================="
+				created = api.video_create(uploadId)
+				print json.dumps(created,sort_keys=False,indent=4)
+
+				# share
+				print "============================share_video===================================="
+				print json.dumps(api.share_video(videoId, [
+						{'Mobile': '18636636365', 'Name': '戴晶晶'},
+						{'Mobile': '18636637312', 'Name': '南燕'},
+						{'Mobile': '18636638800', 'Name': '薛博'},
+						]),sort_keys=False,indent=4)
+
+				break # upload finished
+
+
+			f.seek(p['Saved'],0)
+			bdata = f.read(buffer_size)
+			if bdata is None or len(bdata) == 0:
+				break;
+
+			res = api.upload_data(uploadId, fsize, offset, bdata)
+			offset += len(bdata)
+
+
+	# test video list
+	print "============================share_list===================================="
+	print json.dumps(api.share_list(listMax=2),sort_keys=False,indent=4)
+
+
+	print "============================video_list===================================="
+	video_list = api.video_list(listMax=2)
+	print json.dumps(video_list,sort_keys=False,indent=4)
+
+	if len(video_list['Results']) > 0:
+		videoId = video_list['Results'][0]['VID']
+
+		# video_get	
+		print "============================video_get===================================="
+		video = api.video_get(videoId)
+		print json.dumps(video,sort_keys=False,indent=4)
+
+		# video_dwz
+		print "============================video_dwz===================================="
+		print json.dumps(api.video_dwz(videoId),sort_keys=False,indent=4)
+
+		# video_qrcode
+		print "============================video_qrcode===================================="
+		print json.dumps(api.video_qrcode(videoId),sort_keys=False,indent=4)
