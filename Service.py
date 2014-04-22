@@ -408,6 +408,7 @@ class Service(object):
 
 		userId = self.getUserId(data['UserKey'])
 
+		db = self.__getDB()
 		db.update("UPDATE `video` set `title` = %s, `author` = %s, `create_date` = %s, `category` = %s, `describe` = %s, `tag` = %s  WHERE `id` = %s AND `owner_id` = %s ", (
 			data.get('Title', ''),
 			data.get('Author', ''),
