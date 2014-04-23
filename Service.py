@@ -681,7 +681,7 @@ class Service(object):
 
 		results = []
 
-		shareListInstance = db.list('SELECT * FROM `share_list` WHERE (`owner_id` = %s and flag=0) or (`to_user_id` = %s and flag=1) ORDER BY `to_time` DESC LIMIT %s,%s', (userId, userId, offset, listMax))
+		shareListInstance = db.list('SELECT * FROM `share_list` WHERE (`owner_id` = %s and flag=0) or (`to_user_id` = %s and flag=1 and `to_user_id` <> `owner_id`) ORDER BY `to_time` DESC LIMIT %s,%s', (userId, userId, offset, listMax))
 
 		for shareInstance in shareListInstance:
 			results.append({
