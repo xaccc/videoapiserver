@@ -677,11 +677,11 @@ class Service(object):
 
 		offset = data.get('Offset', 0)
 		listMax = min(100, data.get('Max', 10))
-		count = long(db.get('SELECT COUNT(*) as c FROM `share_list` WHERE `owner_id` = %s or `to_user_id` = %s', (userId,userId)).get('c'))
+		count = long(db.get('SELECT COUNT(*) as c FROM `share_list` WHERE (`owner_id` = %s and flag=0) or (`to_user_id` = %s and flag = 1)', (userId,userId)).get('c'))
 
 		results = []
 
-		shareListInstance = db.list('SELECT * FROM `share_list` WHERE (`owner_id` = %s and flag=0) or (`to_user_id` = %s and flag = 1 and `to_user_id` != `owner_id`) ORDER BY `to_time` DESC LIMIT %s,%s', (userId, userId, offset, listMax))
+		shareListInstance = db.list('SELECT * FROM `share_list` WHERE (`owner_id` = %s and flag=0) or (`to_user_id` = %s and flag = 1) ORDER BY `to_time` DESC LIMIT %s,%s', (userId, userId, offset, listMax))
 
 		for shareInstance in shareListInstance:
 			results.append({
