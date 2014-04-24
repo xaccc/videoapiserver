@@ -19,7 +19,8 @@ class MediaProbe(object):
 		script = 'avprobe -v 0 -of json -show_format -show_streams "%s"' % fileName
 		code, text = commands.getstatusoutput(script)
 		if code == 0:
-			self.probe = json.loads(text)
+			jsonString = text[text.index('{'):] if text.index('{') >= 0 else '{}'
+			self.probe = json.loads(jsonString)
 			self.format = self.probe['format']
 			self.videoStream = self.__stream('video')
 			self.audioStream = self.__stream('audio')
