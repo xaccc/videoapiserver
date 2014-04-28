@@ -203,7 +203,7 @@ if __name__ == '__main__':
 
 				# share
 				print "============================share_video===================================="
-				print json.dumps(api.share_video(videoId, [
+				print json.dumps(api.share_video(created['VID'], [
 						{'Mobile': '18636636365', 'Name': '戴晶晶'},
 						{'Mobile': '18636637312', 'Name': '南燕'},
 						{'Mobile': '18636638800', 'Name': '薛博'},
@@ -211,7 +211,7 @@ if __name__ == '__main__':
 
 				break # upload finished
 
-
+			buffer_size = 80*1024
 			f.seek(p['Saved'],0)
 			bdata = f.read(buffer_size)
 			if bdata is None or len(bdata) == 0:

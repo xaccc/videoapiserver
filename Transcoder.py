@@ -48,10 +48,25 @@ class Transcoder(object):
 		media = MediaProbe(fileName)
 		duration = int(media.duration())
 		for i in range(0,5):
-			ss = duration * i / 5
-			code, text = commands.getstatusoutput('avconv -ss %d -i %s -map_metadata -1 -vframes 1 -y "%s"' % (ss, fileName, "%s_%d.jpg" % (destFileName,i+1)))
-			if code != 0:
+			ss = float(duration * i) / 5
+			if not Transcoder.VideoPoster(fileName, str(i), duration * i / 5):
 				return False
+
+		return True
+
+	@staticmethod
+	def VideoPoster(fileName, posterSuffix = '1', ss = None):
+		if ss == None:
+			media = MediaProbe(fileName)
+			duration = int(media.duration())
+			ss = float(duration) / 5
+
+		destFileName, fileExtension = os.path.splitext(fileName)
+		posterFileName = "%s_%s.jpg" % (destFileName, str(posterSuffix if posterSuffix else '1') )
+
+		code, text = commands.getstatusoutput('avconv -ss %s -i %s -map_metadata -1 -vframes 1 -y "%s"' % (ss, fileName, posterFileName))
+		if code != 0:
+			return False
 
 		return True
 

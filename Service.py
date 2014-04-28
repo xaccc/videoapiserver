@@ -560,6 +560,39 @@ class Service(object):
 		return None
 
 
+	def video_poster(self, data):
+		"""
+		获取视频播放短地址
+		方法：
+			video_poster
+		参数：
+			UserKey[string] –用户登录后的会话ID。
+			VID[string] – 分配的视频ID
+			Time[float] – 截图播放时间点
+		返回值：
+			VID[string] – 视频ID
+			Poster[string] – 视频截图地址
+		"""
+		userId = self.getUserId(data['UserKey'])
+		db = self.__getDB()
+		videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
+
+		if videoInstance:
+			fileName = "%s/%s.mp4" % (self.videoDirectory, videoInstance['upload_id'])
+			posterFileName = "%s/%s_1.jpg" % (self.videoDirectory, videoInstance['upload_id'])
+
+			PosterBaseURL = self.applicationConfig.get('Video','PosterBaseURL')
+			PosterURL = "%s/%s_1.jpg" % (PosterBaseURL, videoInstance['upload_id'])
+
+			Transcoder.VideoPoster(fileName, ss=float(data['Time']))
+			return {
+				'VID'   	: videoInstance['id'],
+				'Poster'	: PosterURL
+			}
+
+		return None
+
+
 	def video_dwz(self, data):
 		"""
 		获取视频播放短地址
@@ -648,8 +681,12 @@ class Service(object):
 					'Signup': toUserId != None
 					})
 
-		import NotifyTCPServer
-		NotifyTCPServer.send_to_server_newshare(userId)
+		try:
+			import NotifyTCPServer
+			NotifyTCPServer.send_to_server_newshare(userId)
+		except:
+			print "Error: NotifyTCPServer.send_to_server_newshare(...)"
+
 
 		return {'SessionId': sessionId, 'Results': results}
 

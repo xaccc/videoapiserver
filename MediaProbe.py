@@ -64,6 +64,8 @@ class MediaProbe(object):
 		return self.__getInt(self.videoStream, 'width')
 	def videoHeight(self):
 		return self.__getInt(self.videoStream, 'height')
+	def videoAspect(self):
+		return float(self.videoWidth()) / float(self.videoHeight())
 	def videoDefinition(self):
 		return MediaProbe.definition(self.videoHeight(), self.videoWidth())
 
