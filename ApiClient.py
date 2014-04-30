@@ -111,6 +111,13 @@ class ApiClient(object):
 				'VID'		: id,
 				})
 
+	def video_poster(self, vid, ss):
+		return self.__postJSON(baseURL + '/video_poster', {
+				'UserKey'	: self.userKey,
+				'VID'		: vid,
+				'Time'		: float(ss)
+				})
+
 	def video_dwz(self, vid):
 		return self.__postJSON(baseURL + '/video_dwz', {
 				'UserKey'	: self.userKey,
@@ -200,6 +207,10 @@ if __name__ == '__main__':
 				print "============================video_create===================================="
 				created = api.video_create(uploadId)
 				print json.dumps(created,sort_keys=False,indent=4)
+
+				print "============================video_poster===================================="
+				poster = api.video_poster(created['VID'], 3.0)
+				print json.dumps(poster,sort_keys=False,indent=4)
 
 				# share
 				print "============================share_video===================================="

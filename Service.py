@@ -475,8 +475,7 @@ class Service(object):
 
 		for videoInstance in videoListInstance:
 			PosterURLs = []
-			for i in range(0,5):
-				PosterURLs.append("%s/%s_%d.jpg" % (PosterBaseURL, videoInstance['upload_id'], int(i+1)))
+			PosterURLs.append("%s/%s_1.jpg" % (PosterBaseURL, videoInstance['upload_id']))
 
 			VideoURLs = []
 			VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['upload_id']))
@@ -534,9 +533,7 @@ class Service(object):
 		if videoInstance:
 			PosterBaseURL = self.applicationConfig.get('Video','PosterBaseURL')
 			PosterURLs = []
-			for i in range(0,5):
-				PosterURLs.append("%s/%s_%d.jpg" % (PosterBaseURL, videoInstance['upload_id'], int(i+1)))
-
+			PosterURLs.append("%s/%s_1.jpg" % (PosterBaseURL, videoInstance['upload_id']))
 
 			VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
 			VideoURLs = []
@@ -562,7 +559,7 @@ class Service(object):
 
 	def video_poster(self, data):
 		"""
-		获取视频播放短地址
+		视频截图更新
 		方法：
 			video_poster
 		参数：
@@ -582,7 +579,7 @@ class Service(object):
 			posterFileName = "%s/%s_1.jpg" % (self.videoDirectory, videoInstance['upload_id'])
 
 			PosterBaseURL = self.applicationConfig.get('Video','PosterBaseURL')
-			PosterURL = "%s/%s_1.jpg" % (PosterBaseURL, videoInstance['upload_id'])
+			PosterURL = "%s/%s_0.jpg" % (PosterBaseURL, videoInstance['upload_id'])
 
 			Transcoder.VideoPoster(fileName, ss=float(data['Time']))
 			return {

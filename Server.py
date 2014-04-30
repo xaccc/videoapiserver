@@ -139,9 +139,10 @@ class MainHandler(tornado.web.RequestHandler):
 
 		userId = self.service.getUserId(data['UserKey'])
 
-		self.__reponseJSON({ 
+		self.__reponseJSON({
 			'Now'		: datetime.now(),
-			'userId'	: userId
+			'UserId'	: userId,
+			'Mobile'	: self.service.getUserMobile(userId)
 		})
 	
 	def user_validate(self, data):
