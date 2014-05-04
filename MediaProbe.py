@@ -20,7 +20,7 @@ class MediaProbe(object):
 		code, text = commands.getstatusoutput(script)
 		if code == 0:
 			jsonString = text[text.index('{'):] if text.index('{') >= 0 else '{}'
-			self.probe = json.loads(jsonString)
+			self.probe = json.loads(jsonString.decode("utf-8", "replace"))
 			self.format = self.probe['format']
 			self.videoStream = self.__stream('video')
 			self.audioStream = self.__stream('audio')

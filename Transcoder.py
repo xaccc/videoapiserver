@@ -10,7 +10,7 @@ cmd_conv = 'avconv'
 
 
 def enum(**enums):
-    return type('Enum', (), enums)
+	return type('Enum', (), enums)
 
 
 TaskStatus = enum(QUEUE='排队中', RUN='转码中', FINISHED='转码完成', ERROR='转码失败')
@@ -63,17 +63,48 @@ Templates = enum(
 
 class Transcoder(object):
 
+	workers = set()
+	__lock = threading.Lock()
+
+	def __init__(self):
+		pass
+
+	def addTask(self, settings, arg = None):
+		worker = Worker(settings = settings, mgr = self, arg = arg)
+
+		__lock.acquire()
+		workers.add(worker)
+		if len(workers) == 1:
+			worker.start()
+		__lock.release()
+		pass
+
+	def worker_list(self):
+		pass
+	def worker_started(self, worker, arg):
+		pass
+	def worker_progress(self, worker, arg, percent, fps):
+		pass
+	def worker_finished(self, worker, arg):
+		__lock.acquire()
+		workers.remove(worker)
+		__lock.release()
+		pass
+	def worker_error(self, worker, arg):
+		__lock.acquire()
+		workers.remove(worker)
+		if len(workers) > 0:
+			workers[0].start()
+		__lock.release()
+		pass
+
 	@staticmethod
 	def videoGeneratePoster(fileName):
 		destFileName, fileExtension = os.path.splitext(fileName)
 		media = MediaProbe(fileName)
 		duration = int(media.duration())
-		for i in range(0,5):
-			ss = float(duration * i) / 5
-			if not Transcoder.VideoPoster(fileName, str(i), duration * i / 5):
-				return False
 
-		return True
+		return Transcoder.VideoPoster(fileName, '1'):
 
 	@staticmethod
 	def VideoPoster(fileName, posterSuffix = '1', ss = None):
@@ -112,21 +143,27 @@ class Transcoder(object):
 
 class Worker(threading.Thread):
 
-	def __init__(self, settings, task=None):
+	def __init__(self, settings, mgr=None, arg=None):
 		if not settings.has_key('file') or not settings.has_key('output'):
 			raise ValueError, 'settings'
 
 		threading.Thread.__init__(self)
-		self._task = task
+		self._mgr = mgr
+		self._arg = arg
 		self._settings = settings
-		self._processed = 0
+		self._progress = 0
+		self._fps = 0
 		self._started = False
 		self._isfinished = False
 		self._keepaspect = True
 
 		self._probe = MediaProbe(self._settings['file'])
 
+	def fps(self):
+		return self._fps
 
+	def settings(self):
+		return self._settings
 
 	def progress(self):
 		return self._processed / self._probe.duration() if not self._isfinished else 1 if self._started else -1
@@ -175,13 +212,28 @@ class Worker(threading.Thread):
 				#process line
 				line = buf[0:buf.index('bits/s')+6]
 				buf = buf[len(line):]
-				times = re.findall(r"time=([\d+|\.]+?)\s", line)
+				times = re.findall(r"time=\s*([\d+|\.]+?)\s", line)
 				if len(times) > 0:
+					if self._mgr != None:
+						self._mgr.worker_started(self, self._arg)
+
 					self._started = True
-					self._processed = float(times[0])
+					self._progress = float(times[0])
+
+				fps = re.findall(r"fps=\s*([\d+|\.]+?)\s", line)
+				if len(fps) > 0:
+					self._fps = float(fps[0])
+
+				if self._mgr != None:
+					self._mgr.worker_processe(self, self._arg, self._progress, self._fps)
 
 			if self.subp.poll() != None:
 				self._isfinished = True
+				if self._mgr != None:
+					if self._started:
+						self._mgr.worker_finished(self, self._arg)
+					else:
+						self._mgr.worker_error(self, self._arg)
 				break # finished
 
 
@@ -192,9 +244,9 @@ if __name__ == '__main__':
 	if len(sys.argv) < 2:
 		raise ValueError, 'Need <input> file and <output> file'
 
-	w = Worker({'file': sys.argv[1],
+	transcoder = Transcoder()
+	transcoder.addTask({'file': sys.argv[1],
 				'output': sys.argv[2]})
-	w.start()
 
 	while True:
 		if not w.isProcessing():
@@ -202,7 +254,4 @@ if __name__ == '__main__':
 				print 'has error!!!'
 			break
 
-		print w.progress()
-		w.join(1)
-
-	print w.isFinished()
+		print "percent: %s, FPS: %s" % (w.progress(), w.fps())
