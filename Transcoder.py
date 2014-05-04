@@ -104,7 +104,7 @@ class Transcoder(object):
 		media = MediaProbe(fileName)
 		duration = int(media.duration())
 
-		return Transcoder.VideoPoster(fileName, '1'):
+		return Transcoder.VideoPoster(fileName, '1')
 
 	@staticmethod
 	def VideoPoster(fileName, posterSuffix = '1', ss = None):
