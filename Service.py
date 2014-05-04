@@ -384,6 +384,21 @@ class Service(object):
 							data.get('Title', ''),data.get('Author', ''),data.get('CreateTime', ''),data.get('Category', ''),data.get('Describe', '')))
 			db.end()
 			os.remove(fileName)
+
+			# post transcode task
+			result = db.save("""INSERT INTO `video_transcode` (`video_id`, `file_name`, `video_width`, `video_height`, `video_bitrate`, `video_codec`, `audio_channels`, `audio_bitrate`, `audio_codec`) 
+								VALUES (%s,%s,%s,%s,%s, %s,%s,%s,%s)""",
+							(newId, data['UploadId'] + '_sd.mp4', 
+								Transcoder.Templates.SD['video_width'], None, 
+								Transcoder.Templates.SD['video_bitrate'], 
+								Transcoder.Templates.SD['video_codec'],
+								Transcoder.Templates.SD['audio_channel'],
+								Transcoder.Templates.SD['audio_bitrate'],
+								Transcoder.Templates.SD['audio_codec'] ))
+			taskId = db.getInsertId()
+			db.end()
+
+
 			return newId
 			
 		return None
