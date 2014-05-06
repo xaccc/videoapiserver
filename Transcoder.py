@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #coding=utf-8
 import subprocess, threading, time, multiprocessing
 import re, os, signal
