@@ -677,7 +677,7 @@ class Service(object):
 		videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
 
 		if videoInstance:
-			fileName = "%s/%s.mp4" % (self.videoDirectory, videoInstance['upload_id'])
+			fileName = "%s/%s.mp4" % (self.videoDirectory, videoInstance['id'])
 
 			PosterBaseURL = self.applicationConfig.get('Video','PosterBaseURL')
 			PosterURL = "%s/%s.jpg" % (PosterBaseURL, videoInstance['id'])
