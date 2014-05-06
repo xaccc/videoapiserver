@@ -680,7 +680,7 @@ class Service(object):
 			fileName = "%s/%s.mp4" % (self.videoDirectory, videoInstance['upload_id'])
 
 			PosterBaseURL = self.applicationConfig.get('Video','PosterBaseURL')
-			PosterURL = "%s/%s.jpg" % (PosterBaseURL, videoInstance['upload_id'])
+			PosterURL = "%s/%s.jpg" % (PosterBaseURL, videoInstance['id'])
 
 			Transcoder.VideoPoster(fileName, ("%s/%s.jpg" % (self.videoDirectory, videoInstance['id'])), ss=float(data['Time']))
 			return {

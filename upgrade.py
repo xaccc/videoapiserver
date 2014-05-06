@@ -38,9 +38,16 @@ for video in videoList:
 	os.rename(srcFileName, destFileName)
 
 	# 截图文件地址
-	srcPosterFileName = "%s/%s_1.jpg" % (videoDirectory, video['upload_id'])
+	srcPosterFileName = "%s/%s_0.jpg" % (videoDirectory, video['upload_id'])
+	srcPoster1FileName = "%s/%s_1.jpg" % (videoDirectory, video['upload_id'])
+	srcPoster2FileName = "%s/%s_2.jpg" % (videoDirectory, video['upload_id'])
 	destPosterFileName = "%s/%s.jpg" % (videoDirectory, video['id'])
-	os.rename(srcPosterFileName, destPosterFileName)
+	if os.path.exists(srcPosterFileName):
+		os.rename(srcPosterFileName, destPosterFileName)
+	elif os.path.exists(srcPoster1FileName):
+		os.rename(srcPoster1FileName, destPosterFileName)
+	elif os.path.exists(srcPoster2FileName):
+		os.rename(srcPoster2FileName, destPosterFileName)
 
 	# 短地址库
 
