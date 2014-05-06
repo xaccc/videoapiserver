@@ -13,6 +13,12 @@ import threading
 
 from MySQLdb.cursors import DictCursor
 from DBUtils.PooledDB import PooledDB
+from ConfigParser import ConfigParser
+
+
+applicationConfig = ConfigParser()
+applicationConfig.read('Config.ini')
+
 
 class MySQL(object):
 	"""
@@ -24,11 +30,20 @@ class MySQL(object):
 	__pool = None
 	__mutex = threading.Lock()
 
-	def __init__(self, settings):
+	def __init__(self, settings = {}):
 		"""
 		数据库构造函数，从连接池中取出连接，并生成操作游标
 		"""
-		self._conn = MySQL.__getConn(settings)
+
+		default_settings = {
+			'host'	: applicationConfig.get('Database','Host'),
+			'port'	: applicationConfig.getint('Database','Port'),
+			'user'	: applicationConfig.get('Database','User'),
+			'passwd': applicationConfig.get('Database','Passwd'),
+			'db'	: applicationConfig.get('Database','Database')}
+		default_settings.update(settings)
+		
+		self._conn = MySQL.__getConn(default_settings)
 		self._cursor = self._conn.cursor()
 
 	@staticmethod

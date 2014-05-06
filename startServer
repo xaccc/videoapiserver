@@ -5,5 +5,5 @@ sleep 1
 if [ -f 'server.pid' ]; then
   echo Server PID: `cat server.pid`
 else
-  echo start server faild!
+  echo Start Server faild!
 fi

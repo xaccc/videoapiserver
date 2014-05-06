@@ -13,7 +13,7 @@ class MediaProbe(object):
 	"""
 	调用依赖的程序分析媒体文件的信息
 	"""
-	definitionName = ('流畅','标清(480p)','高清(720p)','超清(1080p)','4K')
+	definitionName = ('流畅','标清','高清','超清','4K')
 
 	def __init__(self, fileName):
 		script = 'avprobe -v 0 -of json -show_format -show_streams "%s"' % fileName
@@ -54,6 +54,8 @@ class MediaProbe(object):
 
 	def videoBitrate(self):
 		return self.__getInt(self.videoStream, 'bit_rate')
+	def audioChannels(self):
+		return self.__getInt(self.audioStream, 'channels')
 	def audioBitrate(self):
 		return self.__getInt(self.audioStream, 'bit_rate')
 	def videoCodec(self):
@@ -78,26 +80,42 @@ class MediaProbe(object):
 		else:
 			return None
 
+	def supportSD(self):
+		return MediaProbe.definition(self.videoHeight(), self.videoWidth()) >= 1
+	def supportHD(self):
+		return MediaProbe.definition(self.videoHeight(), self.videoWidth()) >= 2
+	def supportHDpro(self):
+		return MediaProbe.definition(self.videoHeight(), self.videoWidth()) >= 3
+
+	def DefinitionIsSD(self):
+		return MediaProbe.definition(self.videoHeight(), self.videoWidth()) == 1
+	def DefinitionIsHD(self):
+		return MediaProbe.definition(self.videoHeight(), self.videoWidth()) == 2
+	def DefinitionIsHDpro(self):
+		return MediaProbe.definition(self.videoHeight(), self.videoWidth()) == 3
+
+
+
 	@staticmethod
-	def definition(height, width= 0):
+	def definition(height, width = 0):
 		"""
 		获取视频清晰度：0-流畅，1-标清，2-高清，3-超清，4-4K
 		"""
-		if height >= 2160 or width >= 3840:
+		if int(height) >= 2160 or int(width) >= 3840:
 			return 4
-		elif height >= 1080 or width >= 1920:
+		elif int(height) >= 1080 or int(width) >= 1920:
 			return 3
-		elif height >= 720 or width >= 1280:
+		elif int(height) >= 720 or int(width) >= 1280:
 			return 2
-		elif height >= 480 or width >= 640:
+		elif int(height) >= 480 or int(width) >= 640:
 			return 1
-		elif height >= 90 or width >= 120:
+		elif int(height) >= 90 or int(width) >= 120:
 			return 0
 		return -1
 
 	@staticmethod
 	def definitionName(height, width= 0):
-		x = MediaProbe.definition(height, width)
+		x = MediaProbe.definition(int(height), int(width))
 		if x >= 0 and x < len(MediaProbe.definitionName):
 			return MediaProbe.definitionName[x]
 		return '未知清晰度'

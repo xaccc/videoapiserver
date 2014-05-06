@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from MySQL import MySQL
 from MediaProbe import MediaProbe
 from Transcoder import Transcoder
+from Transcoder import TranscodeTemplates
 from random import randint
 from ShortUrlHandler import getShortUrl
 
@@ -24,17 +25,8 @@ class Service(object):
 		self.videoDirectory = self.applicationConfig.get('Video','SavePath')
 
 
-	def __del__(self):
-		pass
-
-
 	def __getDB(self):
-		return MySQL({
-					'host'	: self.applicationConfig.get('Database','Host'),
-					'port'	: self.applicationConfig.getint('Database','Port'),
-					'user'	: self.applicationConfig.get('Database','User'),
-					'passwd': self.applicationConfig.get('Database','Passwd'),
-					'db'	: self.applicationConfig.get('Database','Database')})
+		return MySQL()
 
 
 	def generateId(self):
@@ -365,43 +357,101 @@ class Service(object):
 
 		userId = self.getUserId(data['UserKey'])
 
+		fileName = "%s/%s" % (self.uploadDirectory, data['UploadId'])
+
+		db = self.__getDB()
+		newId = self.generateId()
+		media = MediaProbe(fileName)
+
+		# media.createTime()
+		result = db.save("""INSERT INTO `video` (`id`, `upload_id`, `owner_id`, `duration`, `video_width`, `video_height`, `video_bitrate`, `title`, `author`, `create_date`, `category`, `describe`) 
+							VALUES (%s,%s,%s,%s,%s, %s,%s,%s,%s,%s, %s,%s)""",
+						(newId, data['UploadId'], userId, media.duration(), media.videoWidth(), media.videoHeight(), media.videoBitrate(), 
+						data.get('Title', ''),data.get('Author', ''),data.get('CreateTime', media.createTime()),data.get('Category', ''),data.get('Describe', '')))
+		db.end()
+
+		# 截图
 		# auto create directory
 		if not os.path.exists(self.videoDirectory):
 			os.makedirs(self.videoDirectory)
+		destFileName = "%s/%s.jpg" % (self.videoDirectory, newId)
+		Transcoder.VideoPoster(fileName, destFileName)
 
-		fileName = "%s/%s" % (self.uploadDirectory, data['UploadId'])
-		destFileName = "%s/%s.mp4" % (self.videoDirectory, data['UploadId'])
-
-		if Transcoder.videoTransform(fileName, destFileName):
-			db = self.__getDB()
-			newId = self.generateId()
-			media = MediaProbe(fileName)
-
-			# media.createTime()
-			result = db.save("""INSERT INTO `video` (`id`, `upload_id`, `owner_id`, `duration`, `video_width`, `video_height`, `video_bitrate`, `title`, `author`, `create_date`, `category`, `describe`) 
-								VALUES (%s,%s,%s,%s,%s, %s,%s,%s,%s,%s, %s,%s)""",
-							(newId, data['UploadId'], userId, media.duration(), media.videoWidth(), media.videoHeight(), media.videoBitrate(), 
-							data.get('Title', ''),data.get('Author', ''),data.get('CreateTime', ''),data.get('Category', ''),data.get('Describe', '')))
-			db.end()
-			os.remove(fileName)
-
-			# post transcode task
+		# post transcode task
+		# 原清晰度
+		if media.videoCodec() == 'h264' and media.audioCodec() == 'aac' :
 			result = db.save("""INSERT INTO `video_transcode` (`video_id`, `file_name`, `video_width`, `video_height`, `video_bitrate`, `video_codec`, `audio_channels`, `audio_bitrate`, `audio_codec`) 
 								VALUES (%s,%s,%s,%s,%s, %s,%s,%s,%s)""",
-							(newId, data['UploadId'] + '_sd.mp4', 
-								Transcoder.Templates.SD['video_width'], None, 
-								Transcoder.Templates.SD['video_bitrate'], 
-								Transcoder.Templates.SD['video_codec'],
-								Transcoder.Templates.SD['audio_channel'],
-								Transcoder.Templates.SD['audio_bitrate'],
-								Transcoder.Templates.SD['audio_codec'] ))
+							(newId, newId + '.mp4',
+								media.videoWidth(),
+								media.videoHeight(),
+								media.videoBitrate(),
+								'copy',
+								media.audioChannels(),
+								media.audioBitrate(),
+								'copy'))
+			taskId = db.getInsertId()
+			db.end()
+		else:
+			result = db.save("""INSERT INTO `video_transcode` (`video_id`, `file_name`, `video_width`, `video_height`, `video_bitrate`, `video_codec`, `audio_channels`, `audio_bitrate`, `audio_codec`) 
+								VALUES (%s,%s,%s,%s,%s, %s,%s,%s,%s)""",
+							(newId, newId + '.mp4',
+								media.videoWidth(),
+								media.videoHeight(),
+								media.videoBitrate(),
+								TranscodeTemplates.HD['video_codec'],
+								media.audioChannels(),
+								media.audioBitrate(),
+								TranscodeTemplates.HD['audio_codec'] ))
 			taskId = db.getInsertId()
 			db.end()
 
+		# 高清
+		if media.supportHD() and not media.DefinitionIsHD():
+			result = db.save("""INSERT INTO `video_transcode` (`video_id`, `file_name`, `video_width`, `video_height`, `video_bitrate`, `video_codec`, `audio_channels`, `audio_bitrate`, `audio_codec`) 
+								VALUES (%s,%s,%s,%s,%s, %s,%s,%s,%s)""",
+							(newId, newId + '_hd.mp4', 
+								int(TranscodeTemplates.HD['video_width']), 
+								int(TranscodeTemplates.HD['video_width']) / media.videoAspect(),
+								TranscodeTemplates.HD['video_bitrate'], 
+								TranscodeTemplates.HD['video_codec'],
+								TranscodeTemplates.HD['audio_channel'],
+								TranscodeTemplates.HD['audio_bitrate'],
+								TranscodeTemplates.HD['audio_codec'] ))
+			taskId = db.getInsertId()
+			db.end()
 
-			return newId
-			
-		return None
+		# 标清
+		if media.supportSD() and not media.DefinitionIsSD():
+			result = db.save("""INSERT INTO `video_transcode` (`video_id`, `file_name`, `video_width`, `video_height`, `video_bitrate`, `video_codec`, `audio_channels`, `audio_bitrate`, `audio_codec`) 
+								VALUES (%s,%s,%s,%s,%s, %s,%s,%s,%s)""",
+							(newId, newId + '_sd.mp4', 
+								int(TranscodeTemplates.SD['video_width']), 
+								int(TranscodeTemplates.SD['video_width']) / media.videoAspect(),
+								TranscodeTemplates.SD['video_bitrate'], 
+								TranscodeTemplates.SD['video_codec'],
+								TranscodeTemplates.SD['audio_channel'],
+								TranscodeTemplates.SD['audio_bitrate'],
+								TranscodeTemplates.SD['audio_codec'] ))
+			taskId = db.getInsertId()
+			db.end()
+
+		# 流畅
+		if media.supportSD():
+			result = db.save("""INSERT INTO `video_transcode` (`video_id`, `file_name`, `video_width`, `video_height`, `video_bitrate`, `video_codec`, `audio_channels`, `audio_bitrate`, `audio_codec`) 
+								VALUES (%s,%s,%s,%s,%s, %s,%s,%s,%s)""",
+							(newId, newId + '_small.mp4', 
+								int(TranscodeTemplates.CIF['video_width']), 
+								int(TranscodeTemplates.CIF['video_width']) / media.videoAspect(),
+								TranscodeTemplates.CIF['video_bitrate'], 
+								TranscodeTemplates.CIF['video_codec'],
+								TranscodeTemplates.CIF['audio_channel'],
+								TranscodeTemplates.CIF['audio_bitrate'],
+								TranscodeTemplates.CIF['audio_codec'] ))
+			taskId = db.getInsertId()
+			db.end()
+
+		return newId
 
 
 	def video_update(self,data):
@@ -490,10 +540,10 @@ class Service(object):
 
 		for videoInstance in videoListInstance:
 			PosterURLs = []
-			PosterURLs.append("%s/%s_1.jpg" % (PosterBaseURL, videoInstance['upload_id']))
+			PosterURLs.append("%s/%s.jpg" % (PosterBaseURL, videoInstance['id']))
 
 			VideoURLs = []
-			VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['upload_id']))
+			VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['id']))
 			results.append({
 				'VID'   	: videoInstance['id'],
 				'Owner' 	: self.getUserMobile(videoInstance['owner_id']),
@@ -548,11 +598,11 @@ class Service(object):
 		if videoInstance:
 			PosterBaseURL = self.applicationConfig.get('Video','PosterBaseURL')
 			PosterURLs = []
-			PosterURLs.append("%s/%s_1.jpg" % (PosterBaseURL, videoInstance['upload_id']))
+			PosterURLs.append("%s/%s.jpg" % (PosterBaseURL, videoInstance['id']))
 
 			VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
 			VideoURLs = []
-			VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['upload_id']))
+			VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['id']))
 			return {
 				'VID'   	: videoInstance['id'],
 				'Owner' 	: self.getUserMobile(videoInstance['owner_id']),
@@ -570,6 +620,43 @@ class Service(object):
 			}
 
 		return None
+
+
+	def video_ready(self, data):
+		"""
+		视频处理状态
+		方法：
+			video_ready
+		参数：
+			UserKey[string] –用户登录后的会话ID。
+			VID[string] – 视频ID
+		返回值：
+			VID[string] – 视频ID
+			Results[Array] – 视频对象列表，视频对象定义如下：
+				Definition[string] - 清晰度
+				Ready[boolean] - 是否准备就绪
+				URL[string] – 视频所有者，默认为视频上传/分享者的手机号
+				Progress[float] – 处理进度
+		"""
+		result = []
+		userId = self.getUserId(data['UserKey'])
+		db = self.__getDB()
+		videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
+		if videoInstance:
+
+			VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
+			videoTranscodeListInstance = db.get('SELECT * FROM `video_transcode` WHERE `video_id` = %s ORDER BY `video_width` DESC', (data['VID']))
+
+			for videoTranscodeInstance in videoTranscodeListInstance:
+				VideoURLs.append()
+				return {
+					'Definition': MediaProbe.definitionName(videoTranscodeInstance['video_width'], videoTranscodeInstance['video_height']),
+					'Ready' 	: videoTranscodeInstance['is_ready'] == 1,
+					'URL' 		: "%s/%s" % (VideoBaseURL, videoTranscodeInstance['file_name']),
+					'Progress'	: float(videoTranscodeInstance['progress']),
+				}
+
+		return result
 
 
 	def video_poster(self, data):
@@ -593,9 +680,9 @@ class Service(object):
 			fileName = "%s/%s.mp4" % (self.videoDirectory, videoInstance['upload_id'])
 
 			PosterBaseURL = self.applicationConfig.get('Video','PosterBaseURL')
-			PosterURL = "%s/%s_1.jpg" % (PosterBaseURL, videoInstance['upload_id'])
+			PosterURL = "%s/%s.jpg" % (PosterBaseURL, videoInstance['upload_id'])
 
-			Transcoder.VideoPoster(fileName, posterSuffix='1', ss=float(data['Time']))
+			Transcoder.VideoPoster(fileName, ("%s/%s.jpg" % (self.videoDirectory, videoInstance['id'])), ss=float(data['Time']))
 			return {
 				'VID'   	: videoInstance['id'],
 				'Poster'	: PosterURL

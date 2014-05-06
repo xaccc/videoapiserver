@@ -1,18 +1,12 @@
 #coding=utf-8
 #-*- encoding: utf-8 -*-
 
-import os
-import threading, time
-import struct
-import signal
-import json
-import socket
+import os, threading, time, struct, signal, json, socket
 
 from datetime import datetime
 from tornado.tcpserver import TCPServer
 from tornado.ioloop  import IOLoop
-from tornado import process
-from tornado import netutil
+from tornado import process, netutil
 from ConfigParser import ConfigParser
 
 from Server import MyJSONEncoder
@@ -25,6 +19,7 @@ NOTIFY_COMMAND_PING = 1
 NOTIFY_COMMAND_REGISTER = 2
 NOTIFY_COMMAND_SHAREVIDEO = 3
 NOTIFY_COMMAND_NEWSHARED = 4
+
 
 client_set = set()
 client_set_lock = threading.Lock()
@@ -47,6 +42,8 @@ def send_to_server(cmd, data):
 	sock.send(data)
 	time.sleep(1)
 	sock.close()
+
+
 
 class Connection(object):
 
@@ -176,8 +173,7 @@ class Connection(object):
 			if isShutdown.wait(0):
 				break; # exit thread
 
-			newNotify.wait(30)
-			# 5sec 强制获取通知信息
+			newNotify.wait(600) # 10分钟 强制获取通知信息
 			sharelist = service.getShareList()
 			for share in sharelist:
 				try:

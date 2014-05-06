@@ -1,12 +1,16 @@
 #coding=utf-8
 import subprocess, threading, time, multiprocessing
-import re, os
+import re, os, signal
 import commands, uuid, json
 
+from datetime import datetime
 from MediaProbe import MediaProbe
+from ConfigParser import ConfigParser
+from MySQL import MySQL
 
 
-cmd_conv = 'avconv'
+applicationConfig = ConfigParser()
+applicationConfig.read('Config.ini')
 
 
 def enum(**enums):
@@ -16,46 +20,46 @@ def enum(**enums):
 TaskStatus = enum(QUEUE='排队中', RUN='转码中', FINISHED='转码完成', ERROR='转码失败')
 
 
-Templates = enum(
+TranscodeTemplates = enum(
 	QCIF = {
 			'video_codec'	: 'libx264 -profile:v baseline -level 12',
-			'video_bitrate'	: '90k',
-			'video_width'	: '160',
+			'video_bitrate'	: 90*1024,
+			'video_width'	: 160,
 			'audio_codec'	: 'aac -strict -2',
-			'audio_channel'	: '1',
-			'audio_bitrate'	: '16k',
+			'audio_channel'	: 1,
+			'audio_bitrate'	: 16*1024,
 			},
 	CIF = {
 			'video_codec'	: 'libx264 -profile:v baseline -level 12',
-			'video_bitrate'	: '150k',
-			'video_width'	: '320',
+			'video_bitrate'	: 150*1024,
+			'video_width'	: 320,
 			'audio_codec'	: 'aac -strict -2',
-			'audio_channel'	: '1',
-			'audio_bitrate'	: '24k',
+			'audio_channel'	: 1,
+			'audio_bitrate'	: 24*1024,
 			},
 	SD = {
 			'video_codec'	: 'libx264 -profile:v baseline -level 12',
-			'video_bitrate'	: '350k',
-			'video_width'	: '640',
+			'video_bitrate'	: 400*1024,
+			'video_width'	: 640,
 			'audio_codec'	: 'aac -strict -2',
-			'audio_channel'	: '1',
-			'audio_bitrate'	: '32k',
+			'audio_channel'	: 1,
+			'audio_bitrate'	: 32*1024,
 			},
 	HD = {
 			'video_codec'	: 'libx264 -profile:v baseline -level 21',
-			'video_bitrate'	: '700k',
-			'video_width'	: '1280',
+			'video_bitrate'	: 800*1024,
+			'video_width'	: 1280,
 			'audio_codec'	: 'aac -strict -2',
-			'audio_channel'	: '1',
-			'audio_bitrate'	: '32k',
+			'audio_channel'	: 1,
+			'audio_bitrate'	: 64*1024,
 			},
 	HDPRO = {
 			'video_codec'	: 'libx264 -profile:v baseline -level 21',
-			'video_bitrate'	: '2000k',
-			'video_width'	: '1920',
+			'video_bitrate'	: 2*1024*1024,
+			'video_width'	: 1920,
 			'audio_codec'	: 'aac -strict -2',
-			'audio_channel'	: '1',
-			'audio_bitrate'	: '32k',
+			'audio_channel'	: 2,
+			'audio_bitrate'	: 128*1024,
 			},
 	)
 
@@ -63,40 +67,57 @@ Templates = enum(
 
 class Transcoder(object):
 
-	workers = set()
+	__workers = []
 	__lock = threading.Lock()
 
-	def __init__(self):
-		pass
+	def __init__(self, Started = None, Progress = None, Finished = None, Error = None):
+		self.__cb_Start = Started
+		self.__cb_Progress = Progress
+		self.__cb_Finished = Finished
+		self.__cb_Error = Error
 
 	def addTask(self, settings, arg = None):
 		worker = Worker(settings = settings, mgr = self, arg = arg)
 
-		__lock.acquire()
-		workers.add(worker)
-		if len(workers) == 1:
+		Transcoder.__lock.acquire()
+		Transcoder.__workers.append(worker)
+		if len(Transcoder.__workers) == 1:
 			worker.start()
-		__lock.release()
+		Transcoder.__lock.release()
 		pass
 
-	def worker_list(self):
-		pass
+	def Count(self):
+		return len(Transcoder.__workers)
+
 	def worker_started(self, worker, arg):
-		pass
+		if self.__cb_Start:
+			self.__cb_Start(arg)
+
 	def worker_progress(self, worker, arg, percent, fps):
-		pass
+		if self.__cb_Progress:
+			self.__cb_Progress(arg, percent, fps)
+
 	def worker_finished(self, worker, arg):
-		__lock.acquire()
-		workers.remove(worker)
-		__lock.release()
-		pass
+		Transcoder.__lock.acquire()
+		Transcoder.__workers.remove(worker)
+		if len(Transcoder.__workers) > 0:
+			Transcoder.__workers[0].start()
+		Transcoder.__lock.release()
+
+		if self.__cb_Finished:
+			self.__cb_Finished(arg)
+
+
 	def worker_error(self, worker, arg):
-		__lock.acquire()
-		workers.remove(worker)
-		if len(workers) > 0:
-			workers[0].start()
-		__lock.release()
-		pass
+		Transcoder.__lock.acquire()
+		Transcoder.__workers.remove(worker)
+		if len(Transcoder.__workers) > 0:
+			Transcoder.__workers[0].start()
+		Transcoder.__lock.release()
+
+		if self.__cb_Error:
+			self.__cb_Error(arg)
+
 
 	@staticmethod
 	def videoGeneratePoster(fileName):
@@ -104,19 +125,20 @@ class Transcoder(object):
 		media = MediaProbe(fileName)
 		duration = int(media.duration())
 
-		return Transcoder.VideoPoster(fileName, '1')
+		return Transcoder.VideoPoster(fileName)
 
 	@staticmethod
-	def VideoPoster(fileName, posterSuffix = '1', ss = None):
+	def VideoPoster(fileName, destFileName = None, ss = None):
 		if ss == None:
 			media = MediaProbe(fileName)
 			duration = int(media.duration())
 			ss = float(duration) / 5
 
-		destFileName, fileExtension = os.path.splitext(fileName)
-		posterFileName = "%s_%s.jpg" % (destFileName, str(posterSuffix))
+		if destFileName == None:
+			destFileName, fileExtension = os.path.splitext(fileName)
+			destFileName += '.jpg'
 
-		code, text = commands.getstatusoutput('avconv -ss %s -i %s -map_metadata -1 -vframes 1 -y "%s"' % (str(ss), fileName, posterFileName))
+		code, text = commands.getstatusoutput('avconv -ss %s -i %s -map_metadata -1 -vframes 1 -y "%s"' % (str(ss), fileName, destFileName))
 		if code != 0:
 			return False
 
@@ -144,6 +166,20 @@ class Transcoder(object):
 class Worker(threading.Thread):
 
 	def __init__(self, settings, mgr=None, arg=None):
+		"""
+		settings: {
+				'file'
+				'video_codec'
+				'video_bitrate'
+				'video_width'
+				'video_height'
+				'audio_codec'
+				'audio_channels'
+				'audio_bitrate'
+				'format'
+				'output'
+			}
+		"""
 		if not settings.has_key('file') or not settings.has_key('output'):
 			raise ValueError, 'settings'
 
@@ -166,7 +202,7 @@ class Worker(threading.Thread):
 		return self._settings
 
 	def progress(self):
-		return self._processed / self._probe.duration() if not self._isfinished else 1 if self._started else -1
+		return self._progress / self._probe.duration() if not self._isfinished else 1 if self._started else -1
 
 	def hasError(self):
 		return (not self._started) and self._isfinished
@@ -187,23 +223,54 @@ class Worker(threading.Thread):
 		return self._keepaspect
 
 
+	def createSubProecess(self):
+		command = []
+
+		# input
+		command.append('avconv')
+		command.append('-i "%s" -map_metadata -1' % self._settings['file'])
+
+		# video settings
+		if self._settings.get('video_codec') == 'copy':
+			command.append('-vcodec copy')
+		elif self._settings.get('video_codec') == 'none':
+			command.append('-vn')
+		else:
+			command.append('-vcodec')
+			command.append(str(self._settings.get('video_codec', 'libx264 -profile:v baseline -level 21')))
+			command.append('-b:v')
+			command.append(str(self._settings.get('video_bitrate', '150k')))
+			command.append('-s')
+			command.append(str(self._settings.get('video_size', '%ix%i' % (
+						int(self._settings.get('video_width', 320)),
+						int(self._settings.get('video_width', 320)/self._probe.videoAspect() if self.keepAspect() else self._settings.get('video_height', 240))
+						))))
+
+		# audio settings
+		if self._settings.get('audio_codec') == 'copy':
+			command.append('-acodec copy')
+		elif self._settings.get('audio_codec') == 'none':
+			command.append('-an')
+		else:
+			command.append('-acodec')
+			command.append(str(self._settings.get('audio_codec', 'aac -strict -2')))
+			command.append('-ac')
+			command.append(str(self._settings.get('audio_channels', '1')))
+			command.append('-b:a')
+			command.append(str(self._settings.get('audio_bitrate', '32k')))
+
+		# output settings
+		command.append('-f')
+		command.append(str(self._settings.get('format', 'mp4')))
+		command.append('-y "%s"' % self._settings['output'])
+
+		return subprocess.Popen(' '.join(command),
+				stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, close_fds=True)
+
+
 	def run(self):
 
-		self.subp = subprocess.Popen('%s -i "%s" -vcodec %s -b:a %s -s %s -acodec %s -ac %s -b:a %s -f %s -y "%s"' % (
-				cmd_conv,
-				self._settings['file'],
-				self._settings.get('video_codec', 'libx264 -profile:v baseline -level 21'),
-				self._settings.get('video_bitrate', '150k'),
-				self._settings.get('video_size', '%ix%i' % (
-					int(self._settings.get('video_width', 320)),
-					int(self._settings.get('video_width', 320)/self._probe.videoAspect() if self.keepAspect() else self._settings.get('video_height', 240))
-					)),
-				self._settings.get('audio_codec', 'aac -strict -2'),
-				self._settings.get('audio_channel', '1'),
-				self._settings.get('audio_bitrate', '32k'),
-				self._settings.get('format', 'mp4'),
-				self._settings['output']),
-				stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, close_fds=True)
+		self.subp = self.createSubProecess()
 		
 		buf = ''
 		while True:
@@ -214,7 +281,7 @@ class Worker(threading.Thread):
 				buf = buf[len(line):]
 				times = re.findall(r"time=\s*([\d+|\.]+?)\s", line)
 				if len(times) > 0:
-					if self._mgr != None:
+					if not self._started and self._mgr:
 						self._mgr.worker_started(self, self._arg)
 
 					self._started = True
@@ -225,7 +292,7 @@ class Worker(threading.Thread):
 					self._fps = float(fps[0])
 
 				if self._mgr != None:
-					self._mgr.worker_processe(self, self._arg, self._progress, self._fps)
+					self._mgr.worker_progress(self, self._arg, self.progress(), self._fps)
 
 			if self.subp.poll() != None:
 				self._isfinished = True
@@ -237,21 +304,107 @@ class Worker(threading.Thread):
 				break # finished
 
 
+__shutdown = threading.Event()
+
+def sig_handler(sig, frame):
+	print 'shutdown ...'
+	__shutdown.set()
+
+
+def __Started(transcodeId):
+	db = MySQL()
+	db.update("UPDATE `video_transcode` set `transcode_time` = now(), `progress` = 0 WHERE `id` = %s", (transcodeId))
+	db.end()
+	print "[%s] [Start] %s ..." % (datetime.now().strftime('%Y-%m-%dT%H:%M:%S'), transcodeId)
+	pass
+
+def __Progress(transcodeId, percent, fps):
+	db = MySQL()
+	db.update("UPDATE `video_transcode` set `update_time` = now(), `progress` = %s WHERE `id` = %s", (float(percent), transcodeId))
+	db.end()
+	pass
+
+def __Finished(transcodeId):
+	print "[%s] [Finished] %s ..." % (datetime.now().strftime('%Y-%m-%dT%H:%M:%S'), transcodeId)
+	db = MySQL()
+	db.update("UPDATE `video_transcode` set `is_ready` = 1, `progress` = 1 WHERE `id` = %s", (transcodeId))
+	db.end()
+	pass
+
+def __Error(transcodeId):
+	print "[%s] [Error] %s ..." % (datetime.now().strftime('%Y-%m-%dT%H:%M:%S'), transcodeId)
+	pass
+
+
+def StartTranscodeService():
+	import socket
+	hostname = socket.gethostname()
+
+	pid = os.getpid()
+
+	f = open('transcoder.pid', 'wb')
+	f.write(str(pid))
+	f.close()
+
+	signal.signal(signal.SIGTERM, sig_handler)
+	signal.signal(signal.SIGINT, sig_handler)
+
+	db = MySQL()
+	transcoder = Transcoder(Started = __Started, Progress = __Progress, Finished = __Finished, Error = __Error)
+	uploadDirectory = applicationConfig.get('Server','Upload')
+	videoDirectory = applicationConfig.get('Video','SavePath')
+	if not os.path.exists(videoDirectory):
+		os.makedirs(videoDirectory)
+	
+
+	while True:
+		if __shutdown.wait(1):
+			break; # exit thread
+
+		if transcoder.Count() > 0:
+			continue; # wait process
+
+		taskList = db.list('SELECT * FROM `video_transcode` WHERE `transcoder` IS NULL ORDER BY `id` LIMIT 0,1 FOR UPDATE')
+
+		for task in taskList:
+			db.update("UPDATE `video_transcode` set `transcoder` = %s WHERE `id` = %s", (hostname, task['id']))
+			db2 = MySQL()
+			videoInstance = db2.get("SELECT * FROM `video` WHERE `id`=%s", (task['video_id']))
+
+			if videoInstance:
+				fileName = "%s/%s" % (uploadDirectory, videoInstance['upload_id'])
+				destFileName = "%s/%s" % (videoDirectory, task['file_name'])
+				transcoder.addTask({
+					'file' 			: fileName,
+					'video_codec'	: task['video_codec'],
+					'video_bitrate'	: task['video_bitrate'],
+					'video_width'	: task['video_width'],
+					'video_height'	: task['video_height'],
+					'audio_codec'	: task['audio_codec'],
+					'audio_channels': task['audio_channels'],
+					'audio_bitrate'	: task['audio_bitrate'],
+					'output'		: destFileName,
+					}, arg = task['id'])
+
+		db.end()
+
+	while transcoder.Count() > 0:
+		theading.sleep(1)
+		print '.'
+
 
 if __name__ == '__main__':
 	import sys
 
-	if len(sys.argv) < 2:
-		raise ValueError, 'Need <input> file and <output> file'
+	if len(sys.argv) >= 2:
+		def xxx(file, percent, fps):
+			print "[%s] complete: %s, fps: %s" % (file, percent, fps)
+		transcoder = Transcoder(Progress = xxx)
+		transcoder.addTask({'file': sys.argv[1],
+							'output': sys.argv[2]}, sys.argv[1])
+	else:
+		StartTranscodeService()
 
-	transcoder = Transcoder()
-	transcoder.addTask({'file': sys.argv[1],
-				'output': sys.argv[2]})
 
-	while True:
-		if not w.isProcessing():
-			if w.hasError():
-				print 'has error!!!'
-			break
 
-		print "percent: %s, FPS: %s" % (w.progress(), w.fps())
+

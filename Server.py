@@ -16,6 +16,7 @@ import time, signal, multiprocessing
 import httplib, tornado.web, tornado.ioloop, tornado.httpserver
 import dateutil, dateutil.tz, dateutil.parser
 import logging
+import inspect
 
 logging.basicConfig(filename = os.path.join(os.getcwd(), 'server.log'), level = logging.DEBUG)
 
@@ -30,51 +31,28 @@ class MyJSONEncoder(json.JSONEncoder):
 			return json.JSONEncoder.default(self, obj)
 
 
-class MainHandler(tornado.web.RequestHandler):
-	
+class APIHandler(tornado.web.RequestHandler):
+
+
 	def initialize(self, service):
 		self.service = service
-		self.urlmap = {
+		funlist = inspect.getmembers(self, predicate=inspect.ismethod)
+		self.urlmap = {}
+		for m in funlist:
+			self.urlmap[m[0]] = m[1]
+		
+		self.urlmap.update({
 			'validate'			: self.user_validate,
 			'userkey'			: self.user_id,
 			'login'				: self.user_auth,
-			'settings'			: self.settings,
 			'uploadid'			: self.upload_id,
 			'upload'			: self.upload_data,
 			'createvideo'		: self.video_create,
 			'getvideo'			: self.video_get,
 			'sharevideo'		: self.share_video,
 			'listsharevideo'	: self.share_list,
-			'publishvideo'		: self.publishvideo,
+		})
 
-			# 身份认证接口
-			'user_validate'		: self.user_validate,
-			'user_auth'			: self.user_auth,
-			'user_id'			: self.user_id,
-
-			# 上传接口
-			'upload_id'			: self.upload_id,
-			'upload_progress'	: self.upload_progress,
-			'upload_data'		: self.upload_data,
-
-			# 视频相关接口
-			'video_create'		: self.video_create,
-			'video_list'		: self.video_list,
-			'video_get'			: self.video_get,
-			'video_update'		: self.video_update,
-			'video_remove'		: self.video_remove,
-			'video_poster'		: self.video_poster,
-			'video_dwz'			: self.video_dwz,
-			'video_qrcode'		: self.video_qrcode,
-
-			# 分享接口
-			'share_video'		: self.share_video,
-			'share_list'		: self.share_list,
-
-			# 短地址接口
-			'short_url'			: self.short_url,
-			'short_url_get'		: self.short_url_get,
-		}
 
 	def post(self, api):
 		if 'application/json' in self.request.headers['Content-Type']:
@@ -324,6 +302,32 @@ class MainHandler(tornado.web.RequestHandler):
 			'VID': self.service.video_create(data)
 			})
 		pass
+
+
+	def video_ready(self, data):
+		"""
+		视频处理状态
+		方法：
+			video_ready
+		参数：
+			UserKey[string] –用户登录后的会话ID。
+			VID[string] – 视频ID
+		返回值：
+			VID[string] – 视频ID
+			Results[Array] – 视频对象列表，视频对象定义如下：
+				Definition[string] - 清晰度
+				Ready[boolean] - 是否准备就绪
+				URL[string] – 视频所有者，默认为视频上传/分享者的手机号
+				Progress[float] – 处理进度
+		"""
+		if not self.__has_params(data, ('UserKey', 'VID')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			'VID': data['VID'],
+			'Results': self.service.video_ready(data)
+			})
 
 
 
@@ -654,7 +658,7 @@ def startup(applicationConfig):
 	
 	application = tornado.web.Application([
 		(r"/s/(.*)", ShortUrlHandler),
-		(r"/api/(.*)", MainHandler, dict(service=service)),
+		(r"/api/(.*)", APIHandler, dict(service=service)),
 		(r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "./static"}),
 	])
 
