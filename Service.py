@@ -649,7 +649,7 @@ class Service(object):
 
 			for videoTranscodeInstance in videoTranscodeListInstance:
 				return {
-					'Definition': MediaProbe.definitionName(videoTranscodeInstance['video_width'], videoTranscodeInstance['video_height']),
+					'Definition': MediaProbe.definitionName(int(videoTranscodeInstance['video_width']), int(videoTranscodeInstance['video_height'])),
 					'Ready' 	: videoTranscodeInstance['is_ready'] == 1,
 					'URL' 		: "%s/%s" % (VideoBaseURL, videoTranscodeInstance['file_name']),
 					'Progress'	: float(videoTranscodeInstance['progress']),
