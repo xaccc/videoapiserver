@@ -645,15 +645,15 @@ class Service(object):
 		if videoInstance:
 
 			VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
-			videoTranscodeListInstance = db.get('SELECT * FROM `video_transcode` WHERE `video_id` = %s ORDER BY `video_width` DESC', (data['VID']))
+			videoTranscodeListInstance = db.list('SELECT * FROM `video_transcode` WHERE `video_id` = %s ORDER BY `video_width` DESC', (data['VID']))
 
 			for videoTranscodeInstance in videoTranscodeListInstance:
-				return {
-					'Definition': MediaProbe.definitionName(int(videoTranscodeInstance['video_width']), int(videoTranscodeInstance['video_height'])),
+				result.append({
+					'Definition': MediaProbe.definitionName(videoTranscodeInstance['video_height'], videoTranscodeInstance['video_width']),
 					'Ready' 	: videoTranscodeInstance['is_ready'] == 1,
 					'URL' 		: "%s/%s" % (VideoBaseURL, videoTranscodeInstance['file_name']),
 					'Progress'	: float(videoTranscodeInstance['progress']),
-				}
+				})
 
 		return result
 

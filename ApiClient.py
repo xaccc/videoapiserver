@@ -111,6 +111,12 @@ class ApiClient(object):
 				'VID'		: id,
 				})
 
+	def video_ready(self,id):
+		return self.__postJSON(baseURL + '/video_ready', {
+				'UserKey'	: self.userKey,
+				'VID'		: id,
+				})
+
 	def video_poster(self, vid, ss):
 		return self.__postJSON(baseURL + '/video_poster', {
 				'UserKey'	: self.userKey,
@@ -247,6 +253,11 @@ if __name__ == '__main__':
 		# video_get	
 		print "============================video_get===================================="
 		video = api.video_get(videoId)
+		print json.dumps(video,sort_keys=False,indent=4)
+
+		# video_get	
+		print "============================video_ready===================================="
+		video = api.video_ready(videoId)
 		print json.dumps(video,sort_keys=False,indent=4)
 
 		# video_dwz

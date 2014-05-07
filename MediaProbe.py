@@ -13,7 +13,7 @@ class MediaProbe(object):
 	"""
 	调用依赖的程序分析媒体文件的信息
 	"""
-	definitionName = ('流畅','标清','高清','超清','4K')
+	_definitionName = ('流畅','标清','高清','超清','4K')
 
 	def __init__(self, fileName):
 		script = 'avprobe -v 0 -of json -show_format -show_streams "%s"' % fileName
@@ -114,10 +114,10 @@ class MediaProbe(object):
 		return -1
 
 	@staticmethod
-	def definitionName(height, width= 0):
-		x = MediaProbe.definition(int(height), int(width))
-		if x >= 0 and x < len(MediaProbe.definitionName):
-			return MediaProbe.definitionName[x]
+	def definitionName(height, width=0):
+		x = MediaProbe.definition(height, width)
+		if x >= 0 and x < len(MediaProbe._definitionName):
+			return MediaProbe._definitionName[x]
 		return '未知清晰度'
 
 
