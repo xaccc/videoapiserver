@@ -710,7 +710,7 @@ class Service(object):
 			VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
 			return {
 				'VID'   : videoInstance['id'],
-				'URL'	: getShortUrl("%s/%s.mp4" % (VideoBaseURL,videoInstance['upload_id']))
+				'URL'	: getShortUrl("%s/%s.mp4" % (VideoBaseURL,videoInstance['id']))
 			}
 
 		return None
