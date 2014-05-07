@@ -648,7 +648,6 @@ class Service(object):
 			videoTranscodeListInstance = db.get('SELECT * FROM `video_transcode` WHERE `video_id` = %s ORDER BY `video_width` DESC', (data['VID']))
 
 			for videoTranscodeInstance in videoTranscodeListInstance:
-				VideoURLs.append()
 				return {
 					'Definition': MediaProbe.definitionName(videoTranscodeInstance['video_width'], videoTranscodeInstance['video_height']),
 					'Ready' 	: videoTranscodeInstance['is_ready'] == 1,
