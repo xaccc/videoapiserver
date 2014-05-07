@@ -8,7 +8,7 @@ import uuid
 import urllib2
 import base64
 
-from ConfigParser import ConfigParser
+import Config,Utils
 
 
 baseURL = 'http://127.0.0.1:9001/api'
@@ -168,9 +168,7 @@ class ApiClient(object):
 
 
 
-applicationConfig = ConfigParser()
-applicationConfig.read('Config.ini')
-baseURL = applicationConfig.get('Test', 'baseURL')
+baseURL = Config.get('Test', 'baseURL')
 
 
 

@@ -7,16 +7,11 @@ import httplib, tornado.web, tornado.ioloop, tornado.httpserver
 import dateutil, dateutil.tz, dateutil.parser
 import logging
 import NumberCodec
+import Config
 
 from MySQL import MySQL
-from ConfigParser import ConfigParser
 
-
-__config = ConfigParser()
-__config.read('Config.ini')
-__short_url_prefix = __config.get('ShortUrl','Prefix')
-
-
+__short_url_prefix = Config.get('ShortUrl','Prefix')
 
 class ShortUrlHandler(tornado.web.RequestHandler):
 
@@ -35,12 +30,7 @@ class ShortUrlHandler(tornado.web.RequestHandler):
 
 
 def getDB():
-	return MySQL({
-				'host'  : __config.get('Database','Host'),
-				'port'  : __config.getint('Database','Port'),
-				'user'  : __config.get('Database','User'),
-				'passwd': __config.get('Database','Passwd'),
-				'db'    : __config.get('Database','Database')})
+	return MySQL()
 
 
 def getUrl(shortUrl):
@@ -77,7 +67,6 @@ def getShortUrl(url):
 
 
 if __name__ == "__main__":
-	
 	import sys
 
 	if len(sys.argv) > 1:

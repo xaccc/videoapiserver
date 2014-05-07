@@ -1,11 +1,8 @@
 #coding=utf-8
 #-*- encoding: utf-8 -*-
 
-import os
-import sys
-import commands
-import uuid
-import json
+import os, sys, commands
+import uuid, json
 import multiprocessing
 
 

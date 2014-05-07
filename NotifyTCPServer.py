@@ -151,7 +151,8 @@ class Connection(object):
 
 
 	@staticmethod
-	def ping_thread(service):
+	def ping_thread():
+		service = Service()		
 		while( not isShutdown.wait(60) ):
 			userKeys = []
 			try:
@@ -168,7 +169,8 @@ class Connection(object):
 
 
 	@staticmethod
-	def notify_thread(service):
+	def notify_thread():
+		service = Service()
 		while True:
 			if isShutdown.wait(0):
 				break; # exit thread
@@ -247,10 +249,8 @@ def startup():
 	f.write(str(pid))
 	f.close()
 
-	global service
-	service = Service(applicationConfig)
-	threading.Thread(target=Connection.ping_thread, args=(service,)).start()
-	threading.Thread(target=Connection.notify_thread, args=(service,)).start()
+	threading.Thread(target=Connection.ping_thread).start()
+	threading.Thread(target=Connection.notify_thread).start()
 
 	print "Notify Server start on %s:%s (PID:%s) ..." % (host,port,pid)
 

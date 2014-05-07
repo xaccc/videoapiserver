@@ -15,19 +15,17 @@ import uuid
 import hashlib
 import json
 import base64
+import Config
 
 
 class Service(object):
 
-	def __init__(self,config):
-		self.applicationConfig = config
-		self.uploadDirectory = self.applicationConfig.get('Server','Upload')
-		self.videoDirectory = self.applicationConfig.get('Video','SavePath')
-
+	def __init__(self):
+		self.uploadDirectory = Config.get('Server','Upload')
+		self.videoDirectory = Config.get('Video','SavePath')
 
 	def __getDB(self):
 		return MySQL()
-
 
 	def generateId(self):
 		"""
@@ -535,8 +533,8 @@ class Service(object):
 
 		videoListInstance = db.list('SELECT * FROM `video` WHERE `owner_id` = %s ORDER BY `create_time` DESC LIMIT %s,%s', (userId, offset, listMax))
 
-		PosterBaseURL = self.applicationConfig.get('Video','PosterBaseURL')
-		VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
+		PosterBaseURL = Config.get('Video','PosterBaseURL')
+		VideoBaseURL = Config.get('Video','VideoBaseURL')
 
 		for videoInstance in videoListInstance:
 			PosterURLs = []
@@ -596,13 +594,28 @@ class Service(object):
 		db = self.__getDB()
 		videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
 		if videoInstance:
-			PosterBaseURL = self.applicationConfig.get('Video','PosterBaseURL')
+			PosterBaseURL = Config.get('Video','PosterBaseURL')
 			PosterURLs = []
 			PosterURLs.append("%s/%s.jpg" % (PosterBaseURL, videoInstance['id']))
 
-			VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
+			VideoBaseURL = Config.get('Video','VideoBaseURL')
 			VideoURLs = []
 			VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['id']))
+
+			video_urls = []
+			VideoBaseURL = Config.get('Video','VideoBaseURL')
+
+			videoTranscodeListInstance = db.list('SELECT * FROM `video_transcode` WHERE `video_id` = %s ORDER BY `video_width` DESC', (videoInstance['id']))
+			for videoTranscodeInstance in videoTranscodeListInstance:
+				video_urls.append({
+					'Definition': MediaProbe.definitionName(videoTranscodeInstance['video_height'], videoTranscodeInstance['video_width']),
+					'Ready' 	: videoTranscodeInstance['is_ready'] == 1,
+					'URL' 		: "%s/%s" % (VideoBaseURL, videoTranscodeInstance['file_name']),
+					'Progress'	: float(videoTranscodeInstance['progress']),
+				})
+
+			print video_urls
+
 			return {
 				'VID'   	: videoInstance['id'],
 				'Owner' 	: self.getUserMobile(videoInstance['owner_id']),
@@ -615,8 +628,10 @@ class Service(object):
 				'Duration' 	: videoInstance['duration'],
 				'Published'	: videoInstance['create_time'],
 				'Definition': MediaProbe.definition(videoInstance['video_height']),
+				'Poster'	: "%s/%s.jpg" % (PosterBaseURL, videoInstance['id']),
 				'PosterURLs': PosterURLs,
 				'VideoURLs'	: VideoURLs,
+				'Videos'	: video_urls,
 			}
 
 		return None
@@ -644,7 +659,7 @@ class Service(object):
 		videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
 		if videoInstance:
 
-			VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
+			VideoBaseURL = Config.get('Video','VideoBaseURL')
 			videoTranscodeListInstance = db.list('SELECT * FROM `video_transcode` WHERE `video_id` = %s ORDER BY `video_width` DESC', (data['VID']))
 
 			for videoTranscodeInstance in videoTranscodeListInstance:
@@ -678,7 +693,7 @@ class Service(object):
 		if videoInstance:
 			fileName = "%s/%s.mp4" % (self.videoDirectory, videoInstance['id'])
 
-			PosterBaseURL = self.applicationConfig.get('Video','PosterBaseURL')
+			PosterBaseURL = Config.get('Video','PosterBaseURL')
 			PosterURL = "%s/%s.jpg" % (PosterBaseURL, videoInstance['id'])
 
 			Transcoder.VideoPoster(fileName, ("%s/%s.jpg" % (self.videoDirectory, videoInstance['id'])), ss=float(data['Time']))
@@ -707,7 +722,7 @@ class Service(object):
 		videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
 
 		if videoInstance:
-			VideoBaseURL = self.applicationConfig.get('Video','VideoBaseURL')
+			VideoBaseURL = Config.get('Video','VideoBaseURL')
 			return {
 				'VID'   : videoInstance['id'],
 				'URL'	: getShortUrl("%s/%s.mp4" % (VideoBaseURL,videoInstance['id']))

@@ -10,14 +10,10 @@ desc:数据库操作类
 
 import MySQLdb
 import threading
+import Config
 
 from MySQLdb.cursors import DictCursor
 from DBUtils.PooledDB import PooledDB
-from ConfigParser import ConfigParser
-
-
-applicationConfig = ConfigParser()
-applicationConfig.read('Config.ini')
 
 
 class MySQL(object):
@@ -36,13 +32,13 @@ class MySQL(object):
 		"""
 
 		default_settings = {
-			'host'	: applicationConfig.get('Database','Host'),
-			'port'	: applicationConfig.getint('Database','Port'),
-			'user'	: applicationConfig.get('Database','User'),
-			'passwd': applicationConfig.get('Database','Passwd'),
-			'db'	: applicationConfig.get('Database','Database')}
+			'host'	: Config.get('Database','Host'),
+			'port'	: Config.getint('Database','Port'),
+			'user'	: Config.get('Database','User'),
+			'passwd': Config.get('Database','Passwd'),
+			'db'	: Config.get('Database','Database')}
 		default_settings.update(settings)
-		
+
 		self._conn = MySQL.__getConn(default_settings)
 		self._cursor = self._conn.cursor()
 
