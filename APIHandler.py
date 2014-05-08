@@ -5,7 +5,7 @@ from datetime import date,datetime,timedelta
 from Downloader import Download
 
 import multiprocessing
-import httplib,json
+import httplib,json,re
 import tornado.web, tornado.ioloop, tornado.httpserver
 
 import inspect,StringIO
@@ -55,7 +55,9 @@ class APIHandler(tornado.web.RequestHandler):
 				output.write('================================================================================\n')
 				output.write(m)
 				output.write('\n')
-				output.write(doc.replace('\t\t', ''))
+				for line in doc.splitlines():
+					output.write(re.sub(r'^\t\t', '', line))
+					output.write('\n')
 				output.write('\n')
 
 		self.write(output.getvalue())
