@@ -43,15 +43,20 @@ class APIHandler(tornado.web.RequestHandler):
 
 
 	def get(self, api):
+		if api != 'doc':
+			raise tornado.web.HTTPError(404)
+
 		self.set_header('Content-Type', 'text/plain; charset=UTF-8')
-		funlist = inspect.getmembers(self, predicate=inspect.ismethod)
+		funlist = APIHandler.__dict__
 		output = StringIO.StringIO()
-		for m in funlist:
-			output.write('===========================================\n')
-			output.write(m[0])
-			output.write('\n')
-			output.write(m[1].__doc__)
-			output.write('\n')
+		for m in sorted(funlist.iterkeys()):
+			doc = funlist[m].__doc__
+			if m[0] != '_' and doc:
+				output.write('================================================================================\n')
+				output.write(m)
+				output.write('\n')
+				output.write(doc.replace('\t\t', ''))
+				output.write('\n')
 
 		self.write(output.getvalue())
 
@@ -107,7 +112,6 @@ class APIHandler(tornado.web.RequestHandler):
 		返回值：
 			UserId[String] – 用户ID
 		"""
-
 		if not self.__has_params(data, ('UserKey')):
 			raise tornado.web.HTTPError(400, '参数Error')
 
