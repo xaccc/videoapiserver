@@ -1,21 +1,20 @@
 #coding=utf-8
 #-*- encoding: utf-8 -*-
 
-from datetime import date,datetime,timedelta
+from datetime import datetime
 from urlparse import urljoin,urlsplit
-
-from Downloader import Download
-from Service import Service
-from ShortUrlHandler import ShortUrlHandler
-from APIHandler import APIHandler
 
 import os,logging
 import time, signal
 import tornado.web, tornado.ioloop, tornado.httpserver
-import Config,Utils
+import Config
+
+from ShortUrlHandler import ShortUrlHandler
+from APIHandler import APIHandler
 
 
-logging.basicConfig(filename = os.path.join(os.getcwd(), 'server.log'), level = logging.DEBUG)
+
+#logging.basicConfig(filename = os.path.join(os.getcwd(), 'server.log'), level = logging.DEBUG)
 
 
 def sig_handler(sig, frame):
@@ -73,3 +72,4 @@ def startup():
 
 if __name__ == "__main__":
 	startup()
+

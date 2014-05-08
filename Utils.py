@@ -17,6 +17,7 @@ class MyJSONEncoder(json.JSONEncoder):
         else:
             return json.JSONEncoder.default(self, obj)
 
+
 def json_dumps(data):
     return json.dumps(data, cls=MyJSONEncoder, sort_keys=False)
 
