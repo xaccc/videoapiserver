@@ -15,7 +15,6 @@ import Config
 from MySQLdb.cursors import DictCursor
 from DBUtils.PooledDB import PooledDB
 
-print 'enter mysql ...'
 
 class MySQL(object):
 	"""

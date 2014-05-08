@@ -8,7 +8,7 @@ import multiprocessing
 import httplib,json
 import tornado.web, tornado.ioloop, tornado.httpserver
 
-import inspect
+import inspect,StringIO
 import Config, Utils
 import UserService, UploadService, VideoService, ShareService, ShortUrlService
 
@@ -40,7 +40,22 @@ class APIHandler(tornado.web.RequestHandler):
 			self.urlmap.get(api, self.__responseDefault)(json.loads(self.request.body))
 		else:
 			raise tornado.web.HTTPError(400, '数据格式不支持')
-	
+
+
+	def get(self, api):
+		self.set_header('Content-Type', 'text/plain; charset=UTF-8')
+		funlist = inspect.getmembers(self, predicate=inspect.ismethod)
+		output = StringIO.StringIO()
+		for m in funlist:
+			output.write('===========================================\n')
+			output.write(m[0])
+			output.write('\n')
+			output.write(m[1].__doc__)
+			output.write('\n')
+
+		self.write(output.getvalue())
+
+
 	def __responseDefault(self,data):
 		raise tornado.web.HTTPError(400, '功能不支持')
 

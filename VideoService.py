@@ -165,7 +165,7 @@ def video_update(data):
 		data.get('Tag', ''),
 		videoId,
 		userId))
-	
+
 	db.end()
 		
 	return data.get('VID', '')
@@ -220,11 +220,23 @@ def video_list(data):
 	VideoBaseURL = Config.get('Video','VideoBaseURL')
 
 	for videoInstance in videoListInstance:
-		PosterURLs = []
-		PosterURLs.append("%s/%s.jpg" % (PosterBaseURL, videoInstance['id']))
 
 		VideoURLs = []
 		VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['id']))
+		video_urls = []
+		VideoBaseURL = Config.get('Video','VideoBaseURL')
+
+		videoTranscodeListInstance = db.list('SELECT * FROM `video_transcode` WHERE `video_id` = %s ORDER BY `video_width` DESC', (videoInstance['id']))
+		for videoTranscodeInstance in videoTranscodeListInstance:
+			if videoTranscodeInstance['is_ready']:
+				VideoURLs.append("%s/%s" % (VideoBaseURL, videoTranscodeInstance['file_name']))
+			video_urls.append({
+				'Definition': MediaProbe.definitionName(videoTranscodeInstance['video_height'], videoTranscodeInstance['video_width']),
+				'Ready'     : videoTranscodeInstance['is_ready'] == 1,
+				'URL'       : "%s/%s" % (VideoBaseURL, videoTranscodeInstance['file_name']),
+				'Progress'  : float(videoTranscodeInstance['progress']),
+			})
+
 		results.append({
 			'VID'       : videoInstance['id'],
 			'Owner'     : UserService.getUserMobile(videoInstance['owner_id']),
@@ -237,8 +249,10 @@ def video_list(data):
 			'Duration'  : videoInstance['duration'],
 			'Published' : videoInstance['create_time'],
 			'Definition': MediaProbe.definition(videoInstance['video_height']),
-			'PosterURLs': PosterURLs,
+			'Poster'    : "%s/%s.jpg" % (PosterBaseURL, videoInstance['id']),
+			'PosterURLs': ("%s/%s.jpg" % (PosterBaseURL, videoInstance['id']), ),
 			'VideoURLs' : VideoURLs,
+			'Videos'    : video_urls,
 		})
 
 	return {
@@ -278,18 +292,16 @@ def video_get(data):
 	videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
 	if videoInstance:
 		PosterBaseURL = Config.get('Video','PosterBaseURL')
-		PosterURLs = []
-		PosterURLs.append("%s/%s.jpg" % (PosterBaseURL, videoInstance['id']))
-
 		VideoBaseURL = Config.get('Video','VideoBaseURL')
-		VideoURLs = []
-		VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['id']))
 
+		VideoURLs = []
 		video_urls = []
 		VideoBaseURL = Config.get('Video','VideoBaseURL')
 
 		videoTranscodeListInstance = db.list('SELECT * FROM `video_transcode` WHERE `video_id` = %s ORDER BY `video_width` DESC', (videoInstance['id']))
 		for videoTranscodeInstance in videoTranscodeListInstance:
+			if videoTranscodeInstance['is_ready']:
+				VideoURLs.append("%s/%s" % (VideoBaseURL, videoTranscodeInstance['file_name']))
 			video_urls.append({
 				'Definition': MediaProbe.definitionName(videoTranscodeInstance['video_height'], videoTranscodeInstance['video_width']),
 				'Ready'     : videoTranscodeInstance['is_ready'] == 1,
@@ -310,7 +322,7 @@ def video_get(data):
 			'Published' : videoInstance['create_time'],
 			'Definition': MediaProbe.definition(videoInstance['video_height']),
 			'Poster'    : "%s/%s.jpg" % (PosterBaseURL, videoInstance['id']),
-			'PosterURLs': PosterURLs,
+			'PosterURLs': ("%s/%s.jpg" % (PosterBaseURL, videoInstance['id']), ),
 			'VideoURLs' : VideoURLs,
 			'Videos'    : video_urls,
 		}
