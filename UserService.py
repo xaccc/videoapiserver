@@ -46,7 +46,7 @@ def user_password(data):
 
 
 def user_validate(data):
-	db = MySQL(autocommit=True)
+	db = MySQL()
 	
 	code = str(randint(10000,99999))
 	valid_date = datetime.now() + timedelta(seconds=180)

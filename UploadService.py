@@ -113,6 +113,7 @@ def upload_data(data):
 
 	f = open(fileName, 'ab')
 	f.write(bindata)
+	f.flush()
 	f.close()
 
 	return ({'length':long(length), 'saved':long(saved)})

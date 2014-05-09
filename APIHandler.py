@@ -282,7 +282,6 @@ class APIHandler(tornado.web.RequestHandler):
 			Data[string] – 数据包，经Base64编码后的数据包。
 			Size[long] – 数据包包含数据大小（Base64编码前）。
 		返回值：
-			Error[long] – 发送成功返回0，否则返回非零值。
 			Saved[long] – 上传字节数，单位BYTES。
 			Length[long] – 视频字节数，单位BYTES。
 		"""
@@ -292,7 +291,6 @@ class APIHandler(tornado.web.RequestHandler):
 		progress = UploadService.upload_data(data)
 
 		self.__reponseJSON({
-			'Now'       : datetime.now(),
 			'UploadId'  : data['UploadId'],
 			'Length'    : progress['length'],
 			'Saved'     : progress['saved'],
@@ -320,7 +318,6 @@ class APIHandler(tornado.web.RequestHandler):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
 		self.__reponseJSON({
-			'Now': datetime.now(),
 			'VID': VideoService.video_create(data)
 			})
 		pass
@@ -373,7 +370,6 @@ class APIHandler(tornado.web.RequestHandler):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
 		self.__reponseJSON({
-			'Now': datetime.now(),
 			'VID': VideoService.video_update(data)
 			})
 		pass
