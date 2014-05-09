@@ -13,10 +13,6 @@ from ShortUrlHandler import ShortUrlHandler
 from APIHandler import APIHandler
 
 
-
-#logging.basicConfig(filename = os.path.join(os.getcwd(), 'server.log'), level = logging.DEBUG)
-
-
 def sig_handler(sig, frame):
 	logging.warning('Caught signal: %s', sig)
 	tornado.ioloop.IOLoop.instance().add_callback(shutdown)
@@ -71,5 +67,6 @@ def startup():
 
 
 if __name__ == "__main__":
+	logging.basicConfig(filename = os.path.join(os.getcwd(), 'server.log'), level = logging.DEBUG)
 	startup()
 

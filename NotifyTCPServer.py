@@ -9,8 +9,9 @@ from tornado.ioloop  import IOLoop
 from tornado import process, netutil
 from ConfigParser import ConfigParser
 
-from Server import MyJSONEncoder
-from Service import Service
+import Config
+import Utils
+import ShareService
 
 
 PACKET_HEADER_LEN = 6
@@ -30,11 +31,8 @@ def send_to_server_newshare(userId):
 
 
 def send_to_server(cmd, data):
-	applicationConfig = ConfigParser()
-	applicationConfig.read('Config.ini')
-
-	host = applicationConfig.get('NotifyServer','IP')
-	port = applicationConfig.getint('NotifyServer','Listen')
+	host = Config.get('NotifyServer','IP')
+	port = Config.getint('NotifyServer','Listen')
 
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock.connect((host, port))
@@ -152,7 +150,6 @@ class Connection(object):
 
 	@staticmethod
 	def ping_thread():
-		service = Service()		
 		while( not isShutdown.wait(60) ):
 			userKeys = []
 			try:
@@ -170,13 +167,12 @@ class Connection(object):
 
 	@staticmethod
 	def notify_thread():
-		service = Service()
 		while True:
 			if isShutdown.wait(0):
 				break; # exit thread
 
 			newNotify.wait(600) # 10分钟 强制获取通知信息
-			sharelist = service.getShareList()
+			sharelist = ShareService.getShareList()
 			for share in sharelist:
 				try:
 					client_set_lock.acquire()
@@ -189,7 +185,7 @@ class Connection(object):
 								'VID': share['video_id'],
 							}
 							client.postMessage(NOTIFY_COMMAND_SHAREVIDEO, json.dumps(data, cls=MyJSONEncoder))
-							service.shareNotifyed(share['session_id'], share['to_mobile'])
+							ShareService.shareNotifyed(share['session_id'], share['to_mobile'])
 				finally:
 					client_set_lock.release()
 
@@ -237,12 +233,9 @@ def startup():
 	signal.signal(signal.SIGTERM, sig_handler)
 	signal.signal(signal.SIGINT, sig_handler)
 
-	applicationConfig = ConfigParser()
-	applicationConfig.read('Config.ini')
-
-	host = applicationConfig.get('NotifyServer','IP')
-	port = applicationConfig.getint('NotifyServer','Listen')
-	NumProcesses = applicationConfig.getint('NotifyServer','NumProcesses')
+	host = Config.get('NotifyServer','IP')
+	port = Config.getint('NotifyServer','Listen')
+	NumProcesses = Config.getint('NotifyServer','NumProcesses')
 
 	pid = os.getpid()
 	f = open('notifyserver.pid', 'wb')

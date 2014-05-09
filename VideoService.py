@@ -222,9 +222,10 @@ def video_list(data):
 	for videoInstance in videoListInstance:
 
 		VideoURLs = []
-		VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['id']))
 		video_urls = []
 		VideoBaseURL = Config.get('Video','VideoBaseURL')
+
+		VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['id']))
 
 		videoTranscodeListInstance = db.list('SELECT * FROM `video_transcode` WHERE `video_id` = %s ORDER BY `video_width` DESC', (videoInstance['id']))
 		for videoTranscodeInstance in videoTranscodeListInstance:
@@ -297,6 +298,8 @@ def video_get(data):
 		VideoURLs = []
 		video_urls = []
 		VideoBaseURL = Config.get('Video','VideoBaseURL')
+
+		VideoURLs.append("%s/%s.mp4" % (VideoBaseURL,videoInstance['id']))
 
 		videoTranscodeListInstance = db.list('SELECT * FROM `video_transcode` WHERE `video_id` = %s ORDER BY `video_width` DESC', (videoInstance['id']))
 		for videoTranscodeInstance in videoTranscodeListInstance:
