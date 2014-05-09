@@ -5,30 +5,12 @@ from datetime import datetime, timedelta
 from MySQL import MySQL
 from random import randint
 
-import os
-import commands
-import uuid
-import hashlib
-import json
-import base64
-
 import Config
 import Utils
 
 
-def getUserId(userKey):
-	"""
-	获取UserId
-	方法：
-		getUserId
-	参数：
-		userKey[string] – 用户登录后的会话ID。
-	返回值：
-		[string] – UserId
-	"""
-	db = MySQL()
-
-	validate = db.get("SELECT * FROM `session` WHERE `id`=%s", userKey)
+def user_id(userKey):
+	validate = MySQL().get("SELECT * FROM `session` WHERE `id`=%s", userKey)
 
 	if validate:
 		return validate['user_id']
@@ -36,56 +18,38 @@ def getUserId(userKey):
 		raise Exception("会话信息无效或超期.")
 
 
-def getUserMobile(userId):
-	"""
-	获取用户手机号
-	方法：
-		getUserMobile
-	参数：
-		userId[string] – 用户ID
-	返回值：
-		[string] – 手机号
-	"""
-	db = MySQL()
+def user_mobile(userId):
+	user = user_get(userId, notRaise=True)
+	return user['mobile'] if user else None
 
-	user = db.get("SELECT * FROM `user` WHERE `id` = %s", userId)
 
-	if user:
-		return user['mobile']
+def getUserIdByMobile(mobile):
+	user = MySQL().get("SELECT * FROM `user` WHERE `mobile`=%s", mobile)
+	return user['id'] if user else None
+
+
+def user_get(userId, notRaise = False):
+	user = MySQL().get("SELECT * FROM `user` WHERE `id` = %s", userId)
+
+	if user or notRaise:
+		return user
 	else:
 		raise Exception("用户不存在.")
 
 
-def getUserIdByMobile(mobile):
-	"""
-	获取用户ID
-	方法：
-		getUserIdByMobile
-	参数：
-		mobile[string] – 用户手机号
-	返回值：
-		[string] – 用户ID 或 None
-	"""
+def user_password(data):
+	userId = user_id(data['UserKey'])
 	db = MySQL()
-	user = db.get("SELECT * FROM `user` WHERE `mobile`=%s", mobile)
-	return user['id'] if user else None
+	db.update("UPDATE `user` SET `password` = %s WHERE `id` = %s", ( Utils.MD5(data['Password']), userId ))
+	db.end()
+	return userId
 
 
 def user_validate(data):
-	"""
-	发送短信验证码
-	方法：
-		validate
-	参数：
-		Mobile[string] – 用户手机号码
-		Device[string] – 设备名称
-	返回值：
-		ValidityDate[date] – 验证码有效日期。
-	"""
-	db = MySQL()
+	db = MySQL(autocommit=True)
 	
 	code = str(randint(10000,99999))
-	valid_date = datetime.now() + timedelta(seconds=90)
+	valid_date = datetime.now() + timedelta(seconds=180)
 
 	#
 	# TODO: 发送短信到 data['Mobile'] , 验证码为 code， 过期时间 90秒
@@ -135,8 +99,8 @@ def user_auth(data):
 		#
 		# 通过 用户名/邮箱 + 密码 方式登录
 		#
-		user = db.get("SELECT * FROM `user` WHERE (`login`=%s or `email`=%s ) and password = %s",
-						(data['Id'],data['Id'], hashlib.md5(data['Validate']).hexdigest()))
+		user = db.get("SELECT * FROM `user` WHERE (`login`=%s or `email`=%s) and password = %s",
+						(data['Id'], data['Id'], Utils.MD5(data['Validate'])))
 		if user:
 			userId = user['id']
 			isNewUser = False
@@ -177,7 +141,7 @@ def settings(data):
 		Key[string] – 参数名
 		Value[string] – 参数当前设置的值
 	"""
-	userId = getUserId(data['UserKey'])
+	userId = user_id(data['UserKey'])
 	db = MySQL()
 	pass
 

@@ -35,7 +35,8 @@ class APIHandler(tornado.web.RequestHandler):
 			try:
 				func = getattr(self, self.urlmap.get(api, api))
 				func(json.loads(self.request.body))
-			except AttributeError:
+			except AttributeError as e:
+				print e
 				pass
 			else:
 				tornado.web.HTTPError(400, '功能不支持')
@@ -63,9 +64,6 @@ class APIHandler(tornado.web.RequestHandler):
 
 		self.write(output.getvalue())
 
-
-	def __responseDefault(self,data):
-		raise tornado.web.HTTPError(400, '功能不支持')
 
 	def __reponseJSON(self, data):
 		self.set_header('Content-Type', 'application/json')
@@ -107,25 +105,45 @@ class APIHandler(tornado.web.RequestHandler):
 	
 	def user_id(self, data):
 		"""
-		检验 userKey 是否有效
-		方法：
-			user_id
+		获取用户信息
 		参数：
 			UserKey[string] – 用户登录后的会话ID
 		返回值：
 			UserId[String] – 用户ID
-			Mobile[String] – 用户绑定手机号
-			Email[String] – 用户绑定邮箱
+			Name[String] – 用户姓名
+			Login[String] – 用户绑定的登录账户
+			Mobile[String] – 用户绑定的手机号
+			Email[String] – 用户绑定的邮箱
 		"""
 		if not self.__has_params(data, ('UserKey')):
 			raise tornado.web.HTTPError(400, '参数Error')
 
-		userId = UserService.getUserId(data['UserKey'])
+		userId = UserService.user_id(data['UserKey'])
+		user = UserService.user_get(userId)
 
 		self.__reponseJSON({
-			'Now'       : datetime.now(),
 			'UserId'    : userId,
-			'Mobile'    : UserService.getUserMobile(userId)
+			'Name'      : user['name'],
+			'Mobile'    : user['mobile'],
+			'Login'     : user['login'],
+			'Email'     : user['email'],
+		})
+
+	def user_password(self, data):
+		"""
+		更改用户登录密码
+		参数：
+			UserKey[string] – 用户登录后的会话ID
+			Password[string] – 用户设置的密码，建议在客户端通过MD5加密传输
+		返回值：
+			UserId[String] – 用户ID
+		"""
+		if not self.__has_params(data, ('UserKey', 'Password')):
+			raise tornado.web.HTTPError(400, '参数Error')
+
+		userId = UserService.user_password(data)
+		self.__reponseJSON({
+			'UserId' : userId,
 		})
 	
 	def user_validate(self, data):
@@ -142,11 +160,10 @@ class APIHandler(tornado.web.RequestHandler):
 		if not self.__has_params(data, ('Mobile', 'Device')):
 			raise tornado.web.HTTPError(400, '参数Error')
 
-		ValidityDate = UserService.user_validate(data)
+		validityDate = UserService.user_validate(data)
 
 		self.__reponseJSON({ 
-			'Now'           : datetime.now(),
-			'ValidityDate'  : ValidityDate
+			'ValidityDate'  : validityDate,
 		})
 
 

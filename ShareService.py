@@ -25,7 +25,7 @@ def share_video(data):
 			Mobile[string] – 分享手机号
 			Signup[boolean] – 是否注册用户
 	"""
-	userId = UserService.getUserId(data['UserKey'])
+	userId = UserService.user_id(data['UserKey'])
 	db = MySQL()
 
 	videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
@@ -44,7 +44,7 @@ def share_video(data):
 			# create app notify
 			NotifyService.create(toUserId, Utils.json_dumps({
 				'Type'	: 'share_video',
-				'From'	: UserService.getUserMobile(userId),
+				'From'	: UserService.user_mobile(userId),
 				'To'	: to.get('Mobile'),
 				'Date'	: datetime.now(),
 				'VID'	: data['VID'],
@@ -77,7 +77,7 @@ def share_list(data):
 			to_name[date] – 分享日期
 			VID[string] – 视频ID
 	"""
-	userId = UserService.getUserId(data['UserKey'])
+	userId = UserService.user_id(data['UserKey'])
 	db = MySQL()
 
 	offset = data.get('Offset', 0)

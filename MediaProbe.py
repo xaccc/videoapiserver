@@ -69,12 +69,18 @@ class MediaProbe(object):
 		return MediaProbe.definition(self.videoHeight(), self.videoWidth())
 
 	def duration(self):
-		return self.__getFloat(self.videoStream, 'duration')
+		try:
+			return self.__getFloat(self.videoStream, 'duration')
+		except:
+			try:
+				return self.__getFloat(self.format, 'duration')
+			except:
+				return -1
 
 	def createTime(self):
-		if self.format and self.format.has_key('tags') and self.format['tags'].has_key('creation_time'):
+		try:
 			return self.format['tags']['creation_time']
-		else:
+		except:
 			return None
 
 	def supportSD(self):
@@ -90,7 +96,6 @@ class MediaProbe(object):
 		return MediaProbe.definition(self.videoHeight(), self.videoWidth()) == 2
 	def DefinitionIsHDpro(self):
 		return MediaProbe.definition(self.videoHeight(), self.videoWidth()) == 3
-
 
 
 	@staticmethod
@@ -121,3 +126,14 @@ class MediaProbe(object):
 
 if __name__ == "__main__":
 	media = MediaProbe(sys.argv[1])
+	print "videoBitrate : %s" % media.videoBitrate()
+	print "audioChannels : %s" % media.audioChannels()
+	print "audioBitrate : %s" % media.audioBitrate()
+	print "videoCodec : %s" % media.videoCodec()
+	print "audioCodec : %s" % media.audioCodec()
+	print "videoWidth : %s" % media.videoWidth()
+	print "videoHeight : %s" % media.videoHeight()
+	print "videoAspect : %s" % media.videoAspect()
+	print "videoDefinition : %s" % media.videoDefinition()
+	print "duration : %s" % media.duration()
+	print "createTime : %s" % media.createTime()

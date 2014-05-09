@@ -33,7 +33,7 @@ def upload_id(data):
 		UploadId[string] – 分配的视频ID
 		Length[long] – 视频字节数，单位BYTES。
 	"""
-	userId = UserService.getUserId(data['UserKey'])
+	userId = UserService.user_id(data['UserKey'])
 	db = MySQL()
 
 	newId = Utils.UUID()
@@ -56,7 +56,7 @@ def upload_progress(data):
 		Length[long] – 视频字节数，单位BYTES。
 		Saved[long] – 上传字节数，单位BYTES。
 	"""
-	userId = UserService.getUserId(data['UserKey'])
+	userId = UserService.user_id(data['UserKey'])
 	db = MySQL()
 
 	uploadSession = db.get("SELECT * FROM `upload` WHERE `id`=%s and `owner_id` = %s",(data['UploadId'], userId))
@@ -81,7 +81,7 @@ def upload_data(data):
 		Length[long] – 视频字节数，单位BYTES。
 		Saved[long] – 上传字节数，单位BYTES。
 	"""
-	userId = UserService.getUserId(data['UserKey'])
+	userId = UserService.user_id(data['UserKey'])
 	db = MySQL()
 
 	uploadSession = db.get("SELECT * FROM `upload` WHERE `id` = %s and `owner_id` = %s",(data['UploadId'], userId))

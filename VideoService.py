@@ -38,7 +38,7 @@ def video_create(data):
 		VID[string] – 视频ID
 	"""
 
-	userId = UserService.getUserId(data['UserKey'])
+	userId = UserService.user_id(data['UserKey'])
 
 	fileName = "%s/%s" % (uploadDirectory, data['UploadId'])
 
@@ -152,7 +152,7 @@ def video_update(data):
 		VID[string] – 视频ID
 	"""
 
-	userId = UserService.getUserId(data['UserKey'])
+	userId = UserService.user_id(data['UserKey'])
 	videoId = data.get('VID', '')
 
 	db = MySQL()
@@ -203,7 +203,7 @@ def video_list(data):
 			PosterURLs[array] – 视频截图URLs，JPG文件
 			VideoURLs[array] – 视频播放URLs，数量参考清晰度(清晰度+1)
 	"""
-	userId = UserService.getUserId(data['UserKey'])
+	userId = UserService.user_id(data['UserKey'])
 	db = MySQL()
 
 	offset = data.get('Offset', 0)
@@ -240,7 +240,7 @@ def video_list(data):
 
 		results.append({
 			'VID'       : videoInstance['id'],
-			'Owner'     : UserService.getUserMobile(videoInstance['owner_id']),
+			'Owner'     : UserService.user_mobile(videoInstance['owner_id']),
 			'Title'     : videoInstance['title'],
 			'Author'    : videoInstance['author'],
 			'CreateTime': videoInstance['create_date'],
@@ -288,7 +288,7 @@ def video_get(data):
 		PosterURLs[array] – 视频截图URLs，JPG文件，1~5个。
 		VideoURLs[array] – 视频播放URLs，数量参考清晰度(清晰度+1)
 	"""
-	userId = UserService.getUserId(data['UserKey'])
+	userId = UserService.user_id(data['UserKey'])
 	db = MySQL()
 	videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
 	if videoInstance:
@@ -314,7 +314,7 @@ def video_get(data):
 
 		return {
 			'VID'       : videoInstance['id'],
-			'Owner'     : UserService.getUserMobile(videoInstance['owner_id']),
+			'Owner'     : UserService.user_mobile(videoInstance['owner_id']),
 			'Title'     : videoInstance['title'],
 			'Author'    : videoInstance['author'],
 			'CreateTime': videoInstance['create_date'],
@@ -350,7 +350,7 @@ def video_ready(data):
 			Progress[float] – 处理进度
 	"""
 	result = []
-	userId = UserService.getUserId(data['UserKey'])
+	userId = UserService.user_id(data['UserKey'])
 	db = MySQL()
 	videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
 	if videoInstance:
@@ -382,7 +382,7 @@ def video_poster(data):
 		VID[string] – 视频ID
 		Poster[string] – 视频截图地址
 	"""
-	userId = UserService.getUserId(data['UserKey'])
+	userId = UserService.user_id(data['UserKey'])
 	db = MySQL()
 	videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
 
@@ -413,7 +413,7 @@ def video_dwz(data):
 		VID[string] – 视频ID
 		URL[string] – 视频短地址
 	"""
-	userId = UserService.getUserId(data['UserKey'])
+	userId = UserService.user_id(data['UserKey'])
 	db = MySQL()
 	videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
 
@@ -438,7 +438,7 @@ def video_remove(data):
 	返回值：
 		VID[string] – 删除的视频ID
 	"""
-	userId = UserService.getUserId(data['UserKey'])
+	userId = UserService.user_id(data['UserKey'])
 	db = MySQL()
 
 	videoInstance = db.get('SELECT * FROM `video` WHERE `owner_id`=%s and `id` = %s', (userId, data['VID']))

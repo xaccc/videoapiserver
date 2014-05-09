@@ -30,7 +30,6 @@ class MySQL(object):
 		"""
 		数据库构造函数，从连接池中取出连接，并生成操作游标
 		"""
-
 		default_settings = {
 			'host'	: Config.get('Database','Host'),
 			'port'	: Config.getint('Database','Port'),
@@ -173,7 +172,7 @@ class MySQL(object):
 	def update(self, sql, param=None):
 		"""
 		@summary: 更新数据表记录
-		@param sql: ＳＱＬ格式及条件，使用(%s,%s)
+		@param sql: SQL格式及条件，使用(%s,%s)
 		@param param: 要更新的  值 tuple/list
 		@return: count 受影响的行数
 		"""
