@@ -219,7 +219,7 @@ if __name__ == '__main__':
 				# share
 				print "============================share_video===================================="
 				print json.dumps(api.share_video(created['VID'], [
-						{'Mobile': '18636636365', 'Name': '戴晶晶'},
+						{'Mobile': '18636636365', 'Name': '自己'},
 						{'Mobile': '18636637312', 'Name': '南燕'},
 						{'Mobile': '18636638800', 'Name': '薛博'},
 						]),sort_keys=False,indent=4)

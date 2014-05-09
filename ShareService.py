@@ -6,39 +6,7 @@ from MySQL import MySQL
 
 import Config
 import Utils
-import UserService
-
-
-def getShareList(self):
-	"""
-	获取共享列表
-	方法：
-		getShareList
-	参数：
-	返回值：
-		[list] – 共享记录
-			Mobile[string] – 分享手机号，必填
-			Name[string] – 分享姓名，可选
-	"""
-	db = MySQL()
-	return db.list("SELECT `user`.`mobile` , `share`.* FROM `share` LEFT JOIN `user` ON `share`.`owner_id` = `user`.`id` WHERE `share`.`to_time` >= NOW() - INTERVAL 7 DAY AND `share`.`notify_time` IS NULL")
-
-
-def shareNotifyed(shareId, to_mobile):
-	"""
-	获取共享列表
-	方法：
-		getShareList
-	参数：
-	返回值：
-		[list] – 共享记录
-	"""
-	db = MySQL()
-
-	db.update("UPDATE `share` set `notify_time` = NOW() WHERE `session_id` = %s AND `to_mobile` = %s ", (shareId, to_mobile))
-	db.end()
-
-
+import UserService, NotifyService
 
 def share_video(data):
 	"""
@@ -72,18 +40,21 @@ def share_video(data):
 					, (sessionId, userId, data['VID'], toUserId, to.get('Mobile'), to.get('Name')))
 		db.end()
 
+		if toUserId:
+			# create app notify
+			NotifyService.create(toUserId, Utils.json_dumps({
+				'Type'	: 'share_video',
+				'From'	: UserService.getUserMobile(userId),
+				'To'	: to.get('Mobile'),
+				'Date'	: datetime.now(),
+				'VID'	: data['VID'],
+			}), sender = 'share_video', refId = sessionId)
+
 		if result:
 			results.append({
 				'Mobile': to.get('Mobile'),
 				'Signup': toUserId != None
 				})
-
-	try:
-		import NotifyTCPServer
-		NotifyTCPServer.send_to_server_newshare(userId)
-	except:
-		print "Error: NotifyTCPServer.send_to_server_newshare(...)"
-
 
 	return {'SessionId': sessionId, 'Results': results}
 

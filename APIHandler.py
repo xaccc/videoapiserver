@@ -8,7 +8,7 @@ import multiprocessing
 import httplib,json,re
 import tornado.web, tornado.ioloop, tornado.httpserver
 
-import inspect,StringIO
+import StringIO
 import Config, Utils
 import UserService, UploadService, VideoService, ShareService, ShortUrlService
 
@@ -17,27 +17,28 @@ class APIHandler(tornado.web.RequestHandler):
 
 
 	def initialize(self):
-		funlist = inspect.getmembers(self, predicate=inspect.ismethod)
-		self.urlmap = {}
-		for m in funlist:
-			self.urlmap[m[0]] = m[1]
-		
-		self.urlmap.update({
-			'validate'          : self.user_validate,
-			'userkey'           : self.user_id,
-			'login'             : self.user_auth,
-			'uploadid'          : self.upload_id,
-			'upload'            : self.upload_data,
-			'createvideo'       : self.video_create,
-			'getvideo'          : self.video_get,
-			'sharevideo'        : self.share_video,
-			'listsharevideo'    : self.share_list,
-		})
+		self.urlmap = {
+			'validate'          : 'user_validate',
+			'userkey'           : 'user_id',
+			'login'             : 'user_auth',
+			'uploadid'          : 'upload_id',
+			'upload'            : 'upload_data',
+			'createvideo'       : 'video_create',
+			'getvideo'          : 'video_get',
+			'sharevideo'        : 'share_video',
+			'listsharevideo'    : 'share_list',
+		}
 
 
 	def post(self, api):
 		if 'application/json' in self.request.headers['Content-Type']:
-			self.urlmap.get(api, self.__responseDefault)(json.loads(self.request.body))
+			try:
+				func = getattr(self, self.urlmap.get(api, api))
+				func(json.loads(self.request.body))
+			except AttributeError:
+				pass
+			else:
+				tornado.web.HTTPError(400, '功能不支持')
 		else:
 			raise tornado.web.HTTPError(400, '数据格式不支持')
 
@@ -106,13 +107,15 @@ class APIHandler(tornado.web.RequestHandler):
 	
 	def user_id(self, data):
 		"""
-		检验userKey是否有效
+		检验 userKey 是否有效
 		方法：
 			user_id
 		参数：
 			UserKey[string] – 用户登录后的会话ID
 		返回值：
 			UserId[String] – 用户ID
+			Mobile[String] – 用户绑定手机号
+			Email[String] – 用户绑定邮箱
 		"""
 		if not self.__has_params(data, ('UserKey')):
 			raise tornado.web.HTTPError(400, '参数Error')
