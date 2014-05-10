@@ -277,7 +277,7 @@ class Worker(threading.Thread):
 		while True:
 			while True: #read output
 				readed = self.subp.stderr.read(1)
-				if not readed:
+				if not readed or len(readed) == 0:
 					break; # don't read anything
 
 				buf += readed
