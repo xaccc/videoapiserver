@@ -300,7 +300,7 @@ class Worker(threading.Thread):
 					if self._mgr != None:
 						self._mgr.worker_progress(self, self._arg, self.progress(), self._fps)
 
-			if self.subp.poll():
+			if self.subp.poll() != None:
 				self._isfinished = True
 				if self._mgr != None:
 					if self._started:
@@ -405,7 +405,10 @@ if __name__ == '__main__':
 	if len(sys.argv) >= 2:
 		def xxx(file, percent, fps):
 			print "[%s] complete: %s, fps: %s" % (file, percent, fps)
-		transcoder = Transcoder(Progress = xxx)
+		def xxx2(file):
+			print "[%s] completed!" % (file)
+
+		transcoder = Transcoder(Progress = xxx, Finished=xxx2)
 		transcoder.addTask({'file': sys.argv[1],
 							'output': sys.argv[2]}, sys.argv[1])
 	else:
