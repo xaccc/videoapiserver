@@ -275,34 +275,39 @@ class Worker(threading.Thread):
 		
 		buf = ''
 		while True:
-			buf += self.subp.stderr.read(1)
-			if 'bits/s' in buf:
-				#process line
-				line = buf[0:buf.index('bits/s')+6]
-				buf = buf[len(line):]
-				times = re.findall(r"time=\s*([\d+|\.]+?)\s", line)
-				if len(times) > 0:
-					if not self._started and self._mgr:
-						self._mgr.worker_started(self, self._arg)
+			while True: #read output
+				readed = self.subp.stderr.read(1)
+				if not readed:
+					break; # don't read anything
 
-					self._started = True
-					self._progress = float(times[0])
+				buf += readed
+				if 'bits/s' in buf:
+					#process line
+					line = buf[0:buf.index('bits/s')+6]
+					buf = buf[len(line):]
+					times = re.findall(r"time=\s*([\d+|\.]+?)\s", line)
+					if len(times) > 0:
+						if not self._started and self._mgr:
+							self._mgr.worker_started(self, self._arg)
 
-				fps = re.findall(r"fps=\s*([\d+|\.]+?)\s", line)
-				if len(fps) > 0:
-					self._fps = float(fps[0])
+						self._started = True
+						self._progress = float(times[0])
 
-				if self._mgr != None:
-					self._mgr.worker_progress(self, self._arg, self.progress(), self._fps)
+					fps = re.findall(r"fps=\s*([\d+|\.]+?)\s", line)
+					if len(fps) > 0:
+						self._fps = float(fps[0])
 
-			if self.subp.poll() != None:
+					if self._mgr != None:
+						self._mgr.worker_progress(self, self._arg, self.progress(), self._fps)
+
+			if self.subp.poll():
 				self._isfinished = True
 				if self._mgr != None:
 					if self._started:
 						self._mgr.worker_finished(self, self._arg)
 					else:
 						self._mgr.worker_error(self, self._arg)
-				break # finished
+				break; # subprocess exit!!!
 
 
 __shutdown = threading.Event()
