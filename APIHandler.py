@@ -36,10 +36,7 @@ class APIHandler(tornado.web.RequestHandler):
 				func = getattr(self, self.urlmap.get(api, api))
 				func(json.loads(self.request.body))
 			except AttributeError as e:
-				print e
-				pass
-			else:
-				tornado.web.HTTPError(400, '功能不支持')
+				raise tornado.web.HTTPError(400, '功能不支持')
 		else:
 			raise tornado.web.HTTPError(400, '数据格式不支持')
 
@@ -99,7 +96,7 @@ class APIHandler(tornado.web.RequestHandler):
 
 	###########################################################################
 	#
-	# API 功能实现
+	# API 功能实现 - 用户类
 	#
 	###########################################################################
 	
@@ -129,6 +126,7 @@ class APIHandler(tornado.web.RequestHandler):
 			'Email'     : user['email'],
 		})
 
+
 	def user_password(self, data):
 		"""
 		更改用户登录密码
@@ -146,11 +144,10 @@ class APIHandler(tornado.web.RequestHandler):
 			'UserId' : userId,
 		})
 	
+
 	def user_validate(self, data):
 		"""
 		发送短信验证码
-		方法：
-			user_validate
 		参数：
 			Mobile[string] – 用户手机号码
 			Device[string] – 设备名称
@@ -170,8 +167,6 @@ class APIHandler(tornado.web.RequestHandler):
 	def user_auth(self, data):
 		"""
 		验证用户身份
-		方法：
-			user_auth
 		参数：
 			Id[string] – 用户手机号码/用户名/绑定邮箱等相关支持方式的Id
 			Device[string] – 登录设备名称
@@ -201,8 +196,6 @@ class APIHandler(tornado.web.RequestHandler):
 	def settings(self, data):
 		"""
 		更新用户设置
-		方法：
-			settings
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			Key[string] – 参数名
@@ -220,18 +213,22 @@ class APIHandler(tornado.web.RequestHandler):
 		pass
 
 
+	###########################################################################
+	#
+	# API 功能实现 - 数据上传类
+	#
+	###########################################################################
+	
 
 	def upload_id(self, data):
 		"""
-		分配视频ID
-		方法：
-			upload_id
+		分配上传会话ID
 		参数：
 			UserKey[string] –用户登录后的会话ID。
-			Length[long] –视频字节数，单位BYTES。
+			Length[long] – 文件字节数，单位BYTES。
 		返回值：
 			UploadId[string] – 分配的上传会话ID
-			Length[long] – 视频字节数，单位BYTES。
+			Length[long] – 文件字节数，单位BYTES。
 		"""
 		if not self.__has_params(data, ('UserKey', 'Length')):
 			raise tornado.web.HTTPError(400, '参数 Error')
@@ -246,9 +243,7 @@ class APIHandler(tornado.web.RequestHandler):
 
 	def upload_progress(self, data):
 		"""
-		获取视频上传进度
-		方法：
-			upload_progress
+		获取上传进度
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			UploadId[string] – 分配的上传会话ID
@@ -256,7 +251,7 @@ class APIHandler(tornado.web.RequestHandler):
 			Error[long] – 发送成功返回0，否则返回非零值。
 			UploadId[string] – 分配的上传会话ID
 			Saved[long] – 上传字节数，单位BYTES。
-			Length[long] – 视频字节数，单位BYTES。
+			Length[long] – 文件字节数，单位BYTES。
 		"""
 		if not self.__has_params(data, ('UserKey', 'UploadId')):
 			raise tornado.web.HTTPError(400, '参数 Error')
@@ -272,13 +267,11 @@ class APIHandler(tornado.web.RequestHandler):
 
 	def upload_data(self, data):
 		"""
-		上传视频内容
-		方法：
-			upload_data
+		上传数据
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			UploadId[string] – 分配的上传会话ID
-			Offset[long] – 视频文件偏移，单位BYTES。
+			Offset[long] – 文件偏移，单位BYTES。
 			Data[string] – 数据包，经Base64编码后的数据包。
 			Size[long] – 数据包包含数据大小（Base64编码前）。
 		返回值：
@@ -298,11 +291,15 @@ class APIHandler(tornado.web.RequestHandler):
 		pass
 
 
+	###########################################################################
+	#
+	# API 功能实现 - 视频类
+	#
+	###########################################################################
+	
 	def video_create(self, data):
 		"""
 		创建视频信息
-		方法：
-			video_create
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			UploadId[string] – 分配的上传会话ID
@@ -310,7 +307,11 @@ class APIHandler(tornado.web.RequestHandler):
 			Author[string] – 分享者/创作者名称
 			CreateTime[date] – 创作日期
 			Category[string] – 视频分类
+			Describe[string] – 视频描述
 			Tag[string] – 视频标签，标签内容有半角“,”（逗号）分割
+			AddrStr[string] - 视频位置信息
+			Longitude[float] - 视频位置 - 经度
+			Latitude[float] - 视频位置 - 纬度
 		返回值：
 			VID[string] – 视频ID
 		"""
@@ -326,8 +327,6 @@ class APIHandler(tornado.web.RequestHandler):
 	def video_ready(self, data):
 		"""
 		视频处理状态
-		方法：
-			video_ready
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			VID[string] – 视频ID
@@ -353,8 +352,6 @@ class APIHandler(tornado.web.RequestHandler):
 	def video_update(self, data):
 		"""
 		更新视频信息
-		方法：
-			video_update
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			VID[string] – 视频ID
@@ -377,9 +374,7 @@ class APIHandler(tornado.web.RequestHandler):
 
 	def video_list(self, data):
 		"""
-		获取Video列表
-		方法：
-			video_list
+		获取视频列表
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			Offset[long] – 列表起始位置。
@@ -399,6 +394,9 @@ class APIHandler(tornado.web.RequestHandler):
 				ShareTime[date] – 分享日期
 				Category[string] – 视频分类
 				Tag[string] – 视频标签，标签内容有半角,分割
+				AddrStr[string] - 视频位置信息
+				Longitude[float] - 视频位置 - 经度
+				Latitude[float] - 视频位置 - 纬度
 				Duration[long] – 视频长度
 				Definition[long] – 视频清晰度： 0:流畅，1:标清，2:高清，3:超清
 				PosterURLs[array] – 视频截图URLs，JPG文件
@@ -413,8 +411,6 @@ class APIHandler(tornado.web.RequestHandler):
 	def video_get(self, data):
 		"""
 		获取视频信息
-		方法：
-			video_get
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			VID[string] – 分配的视频ID
@@ -426,6 +422,9 @@ class APIHandler(tornado.web.RequestHandler):
 			CreateTime[date] – 创作日期
 			Category[string] – 视频分类
 			Tag[string] – 视频标签，标签内容有半角“,”（逗号）分割
+			AddrStr[string] - 视频位置信息
+			Longitude[float] - 视频位置 - 经度
+			Latitude[float] - 视频位置 - 纬度
 			Duration[long] – 视频长度
 			Definition[long] – 视频清晰度： 0:流畅，1:标清，2:高清，3:超清
 			PosterURLs[array] – 视频截图URLs，JPG文件，1~5个。
@@ -443,7 +442,7 @@ class APIHandler(tornado.web.RequestHandler):
 
 	def video_poster(self, data):
 		"""
-		获取视频播放短地址
+		更新视频截图
 		方法：
 			video_poster
 		参数：
@@ -463,11 +462,10 @@ class APIHandler(tornado.web.RequestHandler):
 
 		self.__reponseJSON(videoInstance)
 
+
 	def video_dwz(self, data):
 		"""
 		获取视频播放短地址
-		方法：
-			video_dwz
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			VID[string] – 分配的视频ID
@@ -484,33 +482,10 @@ class APIHandler(tornado.web.RequestHandler):
 
 		self.__reponseJSON(videoInstance)
 
-
-	def video_qrcode(self, data):
-		"""
-		获取视频播放短地址
-		方法：
-			video_qrcode
-		参数：
-			UserKey[string] –用户登录后的会话ID。
-			VID[string] – 分配的视频ID
-		返回值：
-			VID[string] – 视频ID
-			URL[string] – 视频短地址
-		"""
-		if not self.__has_params(data, ('UserKey', 'VID')):
-			raise tornado.web.HTTPError(400, '参数 Error')
-
-		videoInstance = VideoService.video_dwz(data)
-		if videoInstance == None:
-			raise tornado.web.HTTPError(404, '视频不存在')
-
-		self.__reponseJSON(videoInstance)
 
 	def video_remove(self, data):
 		"""
 		删除视频
-		方法：
-			video_remove
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			VID[string] – 分配的视频ID
@@ -524,11 +499,15 @@ class APIHandler(tornado.web.RequestHandler):
 
 
 
+	###########################################################################
+	#
+	# API 功能实现 - 分享类
+	#
+	###########################################################################
+	
 	def share_video(self, data):
 		"""
 		分享视频
-		方法：
-			share_video
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			VID[string] – 分配的视频ID
@@ -549,8 +528,6 @@ class APIHandler(tornado.web.RequestHandler):
 	def share_list(self, data):
 		"""
 		获取分享列表
-		方法：
-			share_list
 		参数：
 			UserKey[string] –用户登录后的会话ID。
 			Offset[long] – 列表起始位置。
@@ -571,15 +548,19 @@ class APIHandler(tornado.web.RequestHandler):
 		self.__reponseJSON(ShareService.share_list(data))
 
 
+	###########################################################################
+	#
+	# API 功能实现 - 短地址服务
+	#
+	###########################################################################
+	
 	def short_url(self, data):
 		"""
 		获取短地址
-		方法：
-			short_url
 		参数：
 			URL[string] – 需要转换的URL
 		返回值：
-			URL[string] – 转换的URL
+			URL[string] – 原URL
 			SHORT_URL[string] – 短URL
 		"""
 		if not self.__has_params(data, ('URL')):
@@ -591,11 +572,9 @@ class APIHandler(tornado.web.RequestHandler):
 		})
 
 
-	def short_url_get(self, data):
+	def short_url_reverse(self, data):
 		"""
 		通过短地址获取原URL
-		方法：
-			short_url_get
 		参数：
 			URL[string] – 短URL
 		返回值：
@@ -611,6 +590,12 @@ class APIHandler(tornado.web.RequestHandler):
 		})
 
 
+	###########################################################################
+	#
+	# API 功能实现 - 代理下载功能服务
+	#
+	###########################################################################
+	
 	def publishvideo(self, data):
 		multiprocessing.Process(target=Download, args=(data,)).start()
 		pass

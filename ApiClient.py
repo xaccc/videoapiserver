@@ -156,8 +156,8 @@ class ApiClient(object):
 				'URL' : url
 				})
 
-	def short_url_get(self, shortUrl):
-		return self.__postJSON(baseURL + '/short_url_get', {
+	def short_url_reverse(self, shortUrl):
+		return self.__postJSON(baseURL + '/short_url_reverse', {
 				'URL' : shortUrl
 				})
 
@@ -268,5 +268,5 @@ if __name__ == '__main__':
 		print json.dumps(surl,sort_keys=False,indent=4)
 
 
-		print "============================short_url_get===================================="
-		print json.dumps(api.short_url_get(surl['SHORT_URL']),sort_keys=False,indent=4)
+		print "============================short_url_reverse===================================="
+		print json.dumps(api.short_url_reverse(surl['SHORT_URL']),sort_keys=False,indent=4)

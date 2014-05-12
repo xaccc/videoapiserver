@@ -34,6 +34,9 @@ def video_create(data):
 		Category[string] – 视频分类
 		Describe[string] – 视频描述
 		Tag[string] – 视频标签，标签内容有半角“,”（逗号）分割
+		AddrStr[string] - 位置信息
+		Longitude[float] - 经度
+		Latitude[float] - 纬度
 	返回值：
 		VID[string] – 视频ID
 	"""
