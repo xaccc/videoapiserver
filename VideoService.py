@@ -34,9 +34,9 @@ def video_create(data):
 		Category[string] – 视频分类
 		Describe[string] – 视频描述
 		Tag[string] – 视频标签，标签内容有半角“,”（逗号）分割
-		AddrStr[string] - 位置信息
-		Longitude[float] - 经度
-		Latitude[float] - 纬度
+		AddrStr[string] - 视频位置信息
+		Longitude[float] - 视频位置 - 经度
+		Latitude[float] - 视频位置 - 纬度
 	返回值：
 		VID[string] – 视频ID
 	"""
@@ -50,10 +50,18 @@ def video_create(data):
 	media = MediaProbe(fileName)
 
 	# media.createTime()
-	result = db.save("""INSERT INTO `video` (`id`, `upload_id`, `owner_id`, `duration`, `video_width`, `video_height`, `video_bitrate`, `title`, `author`, `create_date`, `category`, `describe`) 
-						VALUES (%s,%s,%s,%s,%s, %s,%s,%s,%s,%s, %s,%s)""",
+	result = db.save("""INSERT INTO `video` (`id`, `upload_id`, `owner_id`, `duration`, `video_width`, `video_height`, `video_bitrate`, `title`, `author`, `create_date`, `category`, `describe`, `tag`, `lbs_addr`, `lbs_lon`, `lbs_lat`) 
+						VALUES (%s,%s,%s,%s,%s, %s,%s,%s,%s,%s, %s,%s,%s,%s,%s,%s)""",
 					(newId, data['UploadId'], userId, media.duration(), media.videoWidth(), media.videoHeight(), media.videoBitrate(), 
-					data.get('Title', ''),data.get('Author', ''),data.get('CreateTime', media.createTime()),data.get('Category', ''),data.get('Describe', '')))
+					data.get('Title', ''),
+					data.get('Author', ''),
+					data.get('CreateTime', media.createTime()),
+					data.get('Category', ''),
+					data.get('Describe', ''),
+					data.get('Tag', ''),
+					data.get('AddrStr', None),
+					data.get('Longitude', None),
+					data.get('Latitude', None)))
 	db.end()
 
 	# 截图
@@ -140,8 +148,6 @@ def video_create(data):
 def video_update(data):
 	"""
 	更新视频信息
-	方法：
-		video_update
 	参数：
 		UserKey[string] –用户登录后的会话ID。
 		VID[string] – 视频ID
@@ -151,6 +157,9 @@ def video_update(data):
 		Category[string] – 视频分类
 		Describe[string] – 视频描述
 		Tag[string] – 视频标签，标签内容有半角“,”（逗号）分割
+		AddrStr[string] - 视频位置信息
+		Longitude[float] - 视频位置 - 经度
+		Latitude[float] - 视频位置 - 纬度
 	返回值：
 		VID[string] – 视频ID
 	"""
@@ -200,6 +209,9 @@ def video_list(data):
 			ShareTime[date] – 分享日期
 			Category[string] – 视频分类
 			Tag[string] – 视频标签，标签内容有半角,分割
+			AddrStr[string] - 视频位置信息
+			Longitude[float] - 视频位置 - 经度
+			Latitude[float] - 视频位置 - 纬度
 			Duration[long] – 视频长度
 			Published[string] - 发布时间
 			Definition[long] – 视频清晰度： 0:流畅，1:标清，2:高清，3:超清
@@ -250,6 +262,9 @@ def video_list(data):
 			'Category'  : videoInstance['category'],
 			'Describe'  : videoInstance['describe'],
 			'Tag'       : videoInstance['tag'],
+			'AddrStr'	: videoInstance['lbs_addr'],
+			'Longitude'	: videoInstance['lbs_lon'],
+			'Latitude'	: videoInstance['lbs_lat'],
 			'Duration'  : videoInstance['duration'],
 			'Published' : videoInstance['create_time'],
 			'Definition': MediaProbe.definition(videoInstance['video_height']),
@@ -324,6 +339,9 @@ def video_get(data):
 			'Category'  : videoInstance['category'],
 			'Describe'  : videoInstance['describe'],
 			'Tag'       : videoInstance['tag'],
+			'AddrStr'	: videoInstance['lbs_addr'],
+			'Longitude'	: videoInstance['lbs_lon'],
+			'Latitude'	: videoInstance['lbs_lat'],
 			'Duration'  : videoInstance['duration'],
 			'Published' : videoInstance['create_time'],
 			'Definition': MediaProbe.definition(videoInstance['video_height']),
