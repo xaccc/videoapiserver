@@ -10,7 +10,7 @@ import tornado.web, tornado.ioloop, tornado.httpserver, tornado.template
 
 import StringIO
 import Config, Utils
-import UserService, UploadService, VideoService, ShareService, ShortUrlService
+import UserService, UploadService, VideoService, ShareService, ShortUrlService, SpaceService
 
 class APIHandler(tornado.web.RequestHandler):
 
@@ -602,4 +602,192 @@ class APIHandler(tornado.web.RequestHandler):
 	def publishvideo(self, data):
 		multiprocessing.Process(target=Download, args=(data,)).start()
 		pass
+
+
+	###########################################################################
+	#
+	# API 功能实现 - 空间服务
+	#
+	###########################################################################
+	
+	def space_list(self, data):
+		"""
+		用户个人空间列表（全部）
+		参数：
+			UserKey[string] – 用户会话ID
+		返回值：
+			Count[long] – 列表数量（全部）
+			Spaces[Array] – 空间对象列表：
+				Id[string] – 空间唯一编号
+				Name[string] – 空间名称
+		"""
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			})
+		
+
+	def space_create(self, data):
+		"""
+		创建用户个人空间
+		参数：
+			UserKey[string] – 用户会话ID
+			Name[string] – 空间名称
+			After[string] – 排在...空间之后[可选]：空间ID编号；如果为'HEAD'，则创建在最开始；如果不提供，则默认最后位置
+		返回值：
+			Id[string] – 空间唯一编号
+			Name[string] – 空间名称
+		"""
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			})
+
+	def space_rename(self, data):
+		"""
+		更改用户个人空间名称
+		参数：
+			UserKey[string] – 用户会话ID
+			Id[string] – 空间唯一编号
+			Name[string] – 新的空间名称
+		返回值：
+			Id[string] – 空间唯一编号
+			Name[string] – 空间名称
+		"""
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			})
+
+	def space_reindex(self, data):
+		"""
+		更改用户个人空间排序位置
+		参数：
+			UserKey[string] – 用户会话ID
+			Id[string] – 空间唯一编号
+			After[string] – 排在...空间之后：空间ID编号；如果为'HEAD'，则创建在最开始；如果不提供，则默认最后位置
+		返回值：
+			Id[string] – 空间唯一编号
+			Name[string] – 空间名称
+		"""
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			})
+
+	def space_res_relation(self, data):
+		"""
+		用户个人空间增加资源
+		参数：
+			UserKey[string] – 用户会话ID
+			Id[string] – 空间唯一编号
+			ResType[string] - 资源类型
+			ResId[string] - 资源唯一编号
+			OrderField1[int] – 排序字段1[可选]
+			OrderField2[int] – 排序字段2[可选]
+			OrderField3[int] – 排序字段3[可选]
+		返回值：
+			Id[string] – 空间唯一编号
+			ResType[string] - 资源类型
+			ResId[string] - 资源唯一编号
+		"""
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			})
+
+	def space_res_unrelation(self, data):
+		"""
+		用户个人空间资源移除
+		参数：
+			UserKey[string] – 用户会话ID
+			Id[string] – 空间唯一编号
+			ResType[string] - 资源类型
+			ResId[string] - 资源唯一编号
+		返回值：
+			Id[string] – 空间唯一编号
+			ResType[string] - 资源类型
+			ResId[string] - 资源唯一编号
+		"""
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			})
+
+	def space_res_order(self, data):
+		"""
+		用户个人空间资源排序字段更新
+		参数：
+			UserKey[string] – 用户会话ID
+			Id[string] – 空间唯一编号
+			ResType[string] - 资源类型
+			ResId[string] - 资源唯一编号
+			OrderField1[int] – 排序字段1[可选]
+			OrderField2[int] – 排序字段2[可选]
+			OrderField3[int] – 排序字段3[可选]
+		返回值：
+			Id[string] – 空间唯一编号
+			ResType[string] - 资源类型
+			ResId[string] - 资源唯一编号
+		"""
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			})
+
+	def space_res_list(self, data):
+		"""
+		用户个人空间资源列表
+		参数：
+			UserKey[string] – 用户会话ID
+			Id[string] – 空间唯一编号
+			ResType[string] - 资源类型
+			Offset[long] – 起始位置[可选]，默认0
+			Max[long] – 最大返回条数[可选]，默认10
+			Sort[int] - 排序字段编号[可选]，可选值：1~3
+			Order[int] - 排序方法[可选]，可选值：0-增序/1-降序
+		返回值：
+			Id[string] – 空间唯一编号
+			ResType[string] - 资源类型
+			Count[long] – 列表数量（全部）
+			Offset[long] – 列表起始位置。
+			Max[long] – 列表最大条数
+			Sort[int] - 排序字段编号[可选]，可选值：1~3
+			Order[int] - 排序方法[可选]，可选值：0-增序/1-降序
+			Results[Array] – 空间对象列表：
+				ResId[string] - 资源唯一编号
+		"""
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			})
+
+	def space_authorize(self, data):
+		"""
+		用户个人空间授权
+		参数：
+			UserKey[string] – 用户会话ID
+			Id[string] – 空间唯一编号
+			UserId[string] – 授权用户ID
+			AllowEdit[int] – 是否允许修改[可选]，0-只读(默认)/1-可修改
+		返回值：
+			Id[string] – 空间唯一编号
+			Name[string] – 空间名称
+			UserId[string] – 授权用户ID
+			UserName[string] – 授权用户名
+			AllowEdit[int] – 是否允许修改[可选]，0-只读(默认)/1-可修改
+		"""
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			})
+
+	def space_authorize_list(self, data):
+		"""
+		用户个人空间授权用户列表
+		参数：
+			UserKey[string] – 用户会话ID
+			Id[string] – 空间唯一编号
+		返回值：
+			Id[string] – 空间唯一编号
+			Name[string] – 空间名称
+			Results[Array] – 授权对象列表：
+				UserId[string] – 授权用户ID
+				UserName[string] – 授权用户名
+				AllowEdit[int] – 是否允许修改，0-只读/1-可修改
+		"""
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			})
 

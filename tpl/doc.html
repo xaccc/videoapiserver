@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>API文档</title>
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5 maximum-scale=1.0">
+
+	<style>
+	/* YUI 3.5.0 reset.css (http://developer.yahoo.com/yui/3/cssreset/) - http://cssreset.com */
+	html{color:#000;background:#FFF}body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,textarea,p,blockquote,th,td{margin:0;padding:0}table{border-collapse:collapse;border-spacing:0}fieldset,img{border:0}address,caption,cite,code,dfn,em,strong,th,var{font-style:normal;font-weight:normal}ol,ul{list-style:none}caption,th{text-align:left}h1,h2,h3,h4,h5,h6{font-size:100%;font-weight:normal}q:before,q:after{content:''}abbr,acronym{border:0;font-variant:normal}sup{vertical-align:text-top}sub{vertical-align:text-bottom}input,textarea,select{font-family:inherit;font-size:inherit;font-weight:inherit}input,textarea,select{*font-size:100%}legend{color:#000}#yui3-css-stamp.cssreset{display:none}
+	body {
+		font-family: '微软雅黑', Helvetica, Arial, sans-serif;
+		font-size: 1em;
+		text-align: center;
+	}
+	a {text-decoration: none; color: #2233aa;}
+	.body {margin: 1em; text-align: left; max-width: 750px; margin:auto; }
+	.body > h1 {font-size: 2em;margin: 1.5em;}
+	.body > h3 {font-size: 1.2em;font-weight:bold;margin: 0em 2em 0em 1em;}
+	#outline {margin: 0em 1em;}
+	#outline li {}
+	#outline li a {}
+	#outline li span {margin-left:0.5em;}
+	#doc {}
+	#doc li {margin-top: 1em; border-top: solid 1px #333;}
+	#doc li .name {font-size: 1.2em; font-weight: bold; margin: 1em 1em 0.5em 1em;}
+	#doc li .name a {font-size: 0.8em; font-weight: normal; color: #999;}
+	#doc li .doc {margin: 0em 2em;}
+	#doc li .doc p {padding-left: 1em;}
+	#doc li .doc p:nth-child(1){ margin: 1em 0em; font-weight: bold; padding-left: 0; }
+	#doc li .doc p.returns,
+	#doc li .doc p.args { margin: 1em 0em; font-weight: bold; padding-left: 0;}
+	</style>
+</head>
+<body>
+<div class="body">
+	<h1>API文档</h1>
+
+	<h3>目录</h3>
+	<ul id="outline">
+		{% for api in data %}
+			<li><a href="#fun_{{ api['name'] }}">{{ api['name'] }}</a><span>{{ api['lines'][0] }}</span></li>
+		{% end %}
+	</ul>
+
+	<ul id="doc">
+		{% for api in data %}
+		{% block api %}
+			<li id="fun_{{ api['name'] }}">
+				<div class="name">{{ api['name'] }} <a href="#outline">返回</a></div>
+				<div class="doc">
+					{% for line in api['lines'] %}
+					<p class="{{ 'returns' if r'返回值：' in line else 'args' if r'参数：' in line else ''}}">{{ line }}<p>
+					{% end %}
+				</div>
+			</li>
+		{% end %}
+		{% end %}
+	</ul>
+</div>
+</body>
+</html>
