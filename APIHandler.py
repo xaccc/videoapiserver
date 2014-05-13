@@ -785,8 +785,40 @@ class APIHandler(tornado.web.RequestHandler):
 		参数：
 			UserKey[string] – 用户会话ID
 			Type[string] - 邀请类型
-			Partner[string] - 邀请对象
-			Channel[string] - 邀请渠道
+			Info[string] – 邀请信息
+		返回值：
+			Code[string] – 邀请码
+		"""
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			})
+
+
+	def invite_list(self, data):
+		"""
+		我的邀请列表
+		参数：
+			UserKey[string] – 用户会话ID
+			Type[string] - 邀请类型
+		返回值：
+			Type[string] - 邀请类型
+			Results[Array] – 授权对象列表：
+				Code[string] – 邀请码
+				IsDeal[boolean] - 0-未接受/1-已经接受
+				DealUserId[string] - 接受邀请用户ID
+				InviteDate[date] – 邀请日期
+				DealDate[date] – 接受邀请日期
+		"""
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			})
+
+	def invite_pocket(self, data):
+		"""
+		完成邀请处理
+		参数：
+			UserKey[string] – 用户会话ID
+			Code[string] – 邀请码
 		返回值：
 			Code[string] – 邀请码
 		"""
@@ -804,9 +836,8 @@ class APIHandler(tornado.web.RequestHandler):
 			Code[string] – 邀请码
 			Inviter[string] – 邀请者姓名
 			Type[string] - 邀请类型
-			Partner[string] - 邀请对象
-			Channel[string] - 邀请渠道
 			InviteDate[date] – 邀请日期
+			Info[string] – 邀请信息
 		"""
 		self.__reponseJSON({
 			'Now': datetime.now(),
@@ -815,16 +846,12 @@ class APIHandler(tornado.web.RequestHandler):
 
 	def invite_deal(self, data):
 		"""
-		接收邀请
+		接受邀请
 		参数：
 			UserKey[string] – 用户会话ID
 			Code[string] – 邀请码
 		返回值：
 			Code[string] – 邀请码
-			Inviter[string] – 邀请者姓名
-			Type[string] - 邀请类型
-			Partner[string] - 邀请对象
-			Channel[string] - 邀请渠道
 		"""
 		self.__reponseJSON({
 			'Now': datetime.now(),
