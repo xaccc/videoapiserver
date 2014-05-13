@@ -65,9 +65,12 @@ class APIHandler(tornado.web.RequestHandler):
 		self.write(loader.load("doc.html").generate(data=data))
 
 
+	def set_default_headers(self):
+		self.set_header('Server', 'VideoServer')
+
+
 	def __reponseJSON(self, data):
 		self.set_header('Content-Type', 'application/json')
-		self.set_header('Server', 'VideoServer')
 		self.write(Utils.json_dumps(data))
 
 	def __has_params(self, data, params):
@@ -601,9 +604,10 @@ class APIHandler(tornado.web.RequestHandler):
 				Id[string] – 空间唯一编号
 				Name[string] – 空间名称
 		"""
-		self.__reponseJSON({
-			'Now': datetime.now(),
-			})
+		if not self.__has_params(data, ('UserKey')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON(SpaceService.space_list(data))
 		
 
 	def space_create(self, data):
@@ -617,9 +621,11 @@ class APIHandler(tornado.web.RequestHandler):
 			Id[string] – 空间唯一编号
 			Name[string] – 空间名称
 		"""
-		self.__reponseJSON({
-			'Now': datetime.now(),
-			})
+		if not self.__has_params(data, ('UserKey','Name')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON(SpaceService.space_create(data))
+
 
 	def space_rename(self, data):
 		"""
@@ -632,9 +638,10 @@ class APIHandler(tornado.web.RequestHandler):
 			Id[string] – 空间唯一编号
 			Name[string] – 空间名称
 		"""
-		self.__reponseJSON({
-			'Now': datetime.now(),
-			})
+		if not self.__has_params(data, ('UserKey','Id')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON(SpaceService.space_rename(data))
 
 	def space_reindex(self, data):
 		"""
@@ -645,11 +652,11 @@ class APIHandler(tornado.web.RequestHandler):
 			After[string] – 排在...空间之后：空间ID编号；如果为'HEAD'，则创建在最开始；如果不提供，则默认最后位置
 		返回值：
 			Id[string] – 空间唯一编号
-			Name[string] – 空间名称
 		"""
-		self.__reponseJSON({
-			'Now': datetime.now(),
-			})
+		if not self.__has_params(data, ('UserKey','Id')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON(SpaceService.space_reindex(data))
 
 	def space_res_relation(self, data):
 		"""
@@ -667,9 +674,10 @@ class APIHandler(tornado.web.RequestHandler):
 			ResType[string] - 资源类型
 			ResId[string] - 资源唯一编号
 		"""
-		self.__reponseJSON({
-			'Now': datetime.now(),
-			})
+		if not self.__has_params(data, ('UserKey','Id','ResType','ResId')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON(SpaceService.space_res_relation(data))
 
 	def space_res_unrelation(self, data):
 		"""
@@ -684,9 +692,10 @@ class APIHandler(tornado.web.RequestHandler):
 			ResType[string] - 资源类型
 			ResId[string] - 资源唯一编号
 		"""
-		self.__reponseJSON({
-			'Now': datetime.now(),
-			})
+		if not self.__has_params(data, ('UserKey','Id','ResType','ResId')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON(SpaceService.space_res_unrelation(data))
 
 	def space_res_order(self, data):
 		"""
@@ -704,9 +713,10 @@ class APIHandler(tornado.web.RequestHandler):
 			ResType[string] - 资源类型
 			ResId[string] - 资源唯一编号
 		"""
-		self.__reponseJSON({
-			'Now': datetime.now(),
-			})
+		if not self.__has_params(data, ('UserKey','Id','ResType','ResId')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON(SpaceService.space_res_order(data))
 
 	def space_res_list(self, data):
 		"""
@@ -730,9 +740,10 @@ class APIHandler(tornado.web.RequestHandler):
 			Results[Array] – 空间对象列表：
 				ResId[string] - 资源唯一编号
 		"""
-		self.__reponseJSON({
-			'Now': datetime.now(),
-			})
+		if not self.__has_params(data, ('UserKey','Id','ResType')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON(SpaceService.space_res_list(data))
 
 	def space_authorize(self, data):
 		"""
@@ -749,9 +760,10 @@ class APIHandler(tornado.web.RequestHandler):
 			UserName[string] – 授权用户名
 			AllowEdit[int] – 是否允许修改[可选]，0-只读(默认)/1-可修改
 		"""
-		self.__reponseJSON({
-			'Now': datetime.now(),
-			})
+		if not self.__has_params(data, ('UserKey','Id','UserId')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON(SpaceService.space_authorize(data))
 
 	def space_authorize_list(self, data):
 		"""
@@ -767,9 +779,59 @@ class APIHandler(tornado.web.RequestHandler):
 				UserName[string] – 授权用户名
 				AllowEdit[int] – 是否允许修改，0-只读/1-可修改
 		"""
-		self.__reponseJSON({
-			'Now': datetime.now(),
-			})
+		if not self.__has_params(data, ('UserKey','Id')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON(SpaceService.space_authorize_list(data))
+
+
+	def space_authorized_spaces(self, data):
+		"""
+		授权的空间列表
+		参数：
+			UserKey[string] – 用户会话ID
+		返回值：
+			Results[Array] – 授权的对象列表：
+				Id[string] – 空间唯一编号
+				Name[string] – 空间名称
+				Owner[string] – 空间所有者
+				OwnerId[string] – 空间所有者用户ID
+				AllowEdit[int] – 是否允许修改，0-只读/1-可修改
+		"""
+		if not self.__has_params(data, ('UserKey','Id','UserId')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON(SpaceService.space_authorized_spaces(data))
+
+
+	def space_authorized_resources(self, data):
+		"""
+		授权的资源列表
+		参数：
+			UserKey[string] – 用户会话ID
+			SpaceId[string] – 空间唯一编号
+			OwnerId[string] – 空间所有者用户ID[可选，SpaceId/OwnerId必须提供一个]
+			ResType[string] - 资源类型
+			Offset[long] – 列表起始位置。
+			Max[long] – 列表最大条数
+			Sort[int] - 排序字段编号[可选]，可选值：1~3
+			Order[int] - 排序方法[可选]，可选值：0-增序/1-降序
+		返回值：
+			Count[long] – 列表数量（全部）
+			Offset[long] – 列表起始位置。
+			Max[long] – 列表最大条数
+			Sort[int] - 排序字段编号[可选]，可选值：1~3
+			Order[int] - 排序方法[可选]，可选值：0-增序/1-降序
+			Results[Array] – 授权的空间资源列表：
+				Id[string] – 所属空间唯一编号
+				ResType[string] - 资源类型
+				ResId[string] - 资源唯一编号
+		"""
+		if not self.__has_params(data, ('UserKey','Id','UserId')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON(SpaceService.space_authorized_resources(data))
+
 
 
 
@@ -834,8 +896,9 @@ class APIHandler(tornado.web.RequestHandler):
 			Code[string] – 邀请码
 		返回值：
 			Code[string] – 邀请码
-			Inviter[string] – 邀请者姓名
 			Type[string] - 邀请类型
+			InviterId[string] – 邀请者UserId
+			Inviter[string] – 邀请者姓名
 			InviteDate[date] – 邀请日期
 			Info[string] – 邀请信息
 		"""

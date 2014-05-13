@@ -21,3 +21,9 @@ class ShortUrlHandler(tornado.web.RequestHandler):
 			db.end()
 		else:
 			raise tornado.web.HTTPError(404)
+
+
+	def set_default_headers(self):
+		self.set_header('Server', 'Short URL Server')
+
+
