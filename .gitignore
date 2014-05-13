@@ -43,4 +43,4 @@ uploads
 videos
 *.pid
 *.class
-.svn
+.svn/pristine
