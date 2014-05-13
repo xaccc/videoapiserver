@@ -19,14 +19,17 @@ def list(userId=None):
 
 
 def create(toUserId, notifyContent, sender=None, refId=None):
+	notifyId = Utils.UUID()
 	db = MySQL()
-	db.save("INSERT INTO `user_notify` (`id`,`user_id`,`notify`,`sender`,`ref_id`) VALUES (%s,%s,%s,%s,%s)", (Utils.UUID(), toUserId, notifyContent, sender, refId))
+	db.save("INSERT INTO `user_notify` (`id`,`user_id`,`notify`,`sender`,`ref_id`) VALUES (%s,%s,%s,%s,%s)", (notifyId, toUserId, notifyContent, sender, refId))
 	db.end()
 
 	try:
 		NotifyTCPServer.notify_server_has_new(toUserId)
 	except Exception as e:
 		print "Error: %s" % e
+
+	return notifyId
 
 
 def arrived(notifyId):

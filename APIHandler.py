@@ -10,7 +10,7 @@ import tornado.web, tornado.ioloop, tornado.httpserver, tornado.template
 
 import StringIO
 import Config, Utils
-import UserService, UploadService, VideoService, ShareService, ShortUrlService, SpaceService
+import UserService, UploadService, VideoService, ShareService, ShortUrlService, SpaceService, InviteService, NotifyService
 
 class APIHandler(tornado.web.RequestHandler):
 
@@ -99,7 +99,7 @@ class APIHandler(tornado.web.RequestHandler):
 
 	###########################################################################
 	#
-	# API 功能实现 - 用户类
+	# 用户类
 	#
 	###########################################################################
 	
@@ -196,7 +196,7 @@ class APIHandler(tornado.web.RequestHandler):
 
 
 
-	def settings(self, data):
+	def user_settings(self, data):
 		"""
 		更新用户设置
 		参数：
@@ -218,7 +218,7 @@ class APIHandler(tornado.web.RequestHandler):
 
 	###########################################################################
 	#
-	# API 功能实现 - 数据上传类
+	# 数据上传类
 	#
 	###########################################################################
 	
@@ -296,7 +296,7 @@ class APIHandler(tornado.web.RequestHandler):
 
 	###########################################################################
 	#
-	# API 功能实现 - 视频类
+	# 视频类
 	#
 	###########################################################################
 	
@@ -466,26 +466,6 @@ class APIHandler(tornado.web.RequestHandler):
 		self.__reponseJSON(videoInstance)
 
 
-	def video_dwz(self, data):
-		"""
-		获取视频播放短地址
-		参数：
-			UserKey[string] –用户登录后的会话ID。
-			VID[string] – 分配的视频ID
-		返回值：
-			VID[string] – 视频ID
-			URL[string] – 视频短地址
-		"""
-		if not self.__has_params(data, ('UserKey', 'VID')):
-			raise tornado.web.HTTPError(400, '参数 Error')
-
-		videoInstance = VideoService.video_dwz(data)
-		if videoInstance == None:
-			raise tornado.web.HTTPError(404, '视频不存在')
-
-		self.__reponseJSON(videoInstance)
-
-
 	def video_remove(self, data):
 		"""
 		删除视频
@@ -504,7 +484,7 @@ class APIHandler(tornado.web.RequestHandler):
 
 	###########################################################################
 	#
-	# API 功能实现 - 分享类
+	# 分享类
 	#
 	###########################################################################
 	
@@ -553,7 +533,7 @@ class APIHandler(tornado.web.RequestHandler):
 
 	###########################################################################
 	#
-	# API 功能实现 - 短地址服务
+	# 短地址服务
 	#
 	###########################################################################
 	
@@ -595,7 +575,7 @@ class APIHandler(tornado.web.RequestHandler):
 
 	###########################################################################
 	#
-	# API 功能实现 - 代理下载功能服务
+	# 代理下载功能服务
 	#
 	###########################################################################
 	
@@ -606,7 +586,7 @@ class APIHandler(tornado.web.RequestHandler):
 
 	###########################################################################
 	#
-	# API 功能实现 - 空间服务
+	# 空间服务
 	#
 	###########################################################################
 	
@@ -786,6 +766,140 @@ class APIHandler(tornado.web.RequestHandler):
 				UserId[string] – 授权用户ID
 				UserName[string] – 授权用户名
 				AllowEdit[int] – 是否允许修改，0-只读/1-可修改
+		"""
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			})
+
+
+
+	###########################################################################
+	#
+	# 邀请服务
+	#
+	###########################################################################
+	
+	def invite_code(self, data):
+		"""
+		申请邀请码
+		参数：
+			UserKey[string] – 用户会话ID
+			Type[string] - 邀请类型
+			Partner[string] - 邀请对象
+			Channel[string] - 邀请渠道
+		返回值：
+			Code[string] – 邀请码
+		"""
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			})
+
+
+	def invite_info(self, data):
+		"""
+		邀请信息
+		参数：
+			Code[string] – 邀请码
+		返回值：
+			Code[string] – 邀请码
+			Inviter[string] – 邀请者姓名
+			Type[string] - 邀请类型
+			Partner[string] - 邀请对象
+			Channel[string] - 邀请渠道
+			InviteDate[date] – 邀请日期
+		"""
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			})
+
+
+	def invite_deal(self, data):
+		"""
+		接收邀请
+		参数：
+			UserKey[string] – 用户会话ID
+			Code[string] – 邀请码
+		返回值：
+			Code[string] – 邀请码
+			Inviter[string] – 邀请者姓名
+			Type[string] - 邀请类型
+			Partner[string] - 邀请对象
+			Channel[string] - 邀请渠道
+		"""
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			})
+
+
+	###########################################################################
+	#
+	# 通知服务
+	#
+	###########################################################################
+	
+	def notify_send(self, data):
+		"""
+		发送通知
+		参数：
+			UserKey[string] – 用户会话ID
+			NotifyUserId[string] - 通知用户ID
+			Content[string] - 通知内容
+			ReferId[string] - 相关对象ID[可选]
+		返回值：
+			NotifyId[string] – 通知ID
+		"""
+		if not self.__has_params(data, ('UserKey', 'NotifyUserId', 'Content')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		userId = UserService.user_id(data['UserKey'])
+		toUser = UserService.user_get(data['NotifyUserId'])
+
+		if not toUser:
+			raise tornado.web.HTTPError(404, '通知用户不存在')
+
+		self.__reponseJSON({
+			'NotifyId': NotifyService.create(data['NotifyUserId'], data['Content'], sender=userId, refId=data.get('ReferId', None))
+			})
+
+
+
+	def notify_list(self, data):
+		"""
+		通知列表
+		参数：
+			UserKey[string] – 用户会话ID
+		返回值：
+			Count[int] - 未读通知数量
+			Results[Array] – 授权对象列表：
+				NotifyId[string] – 通知ID
+				Content[string] - 通知内容
+				ReferId[string] - 相关对象ID[可选]
+				Sender[string] - 通知发送者[可选]
+				CreateTime[date] - 通知创建时间
+				ArrivedTime[date] - 通知到达时间
+				VisitedTime[date] - 通知查看时间
+		"""
+		if not self.__has_params(data, ('UserKey')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		userId = UserService.user_id(data['UserKey'])
+		notifyList = NotifyService.list(userId)
+
+		self.__reponseJSON({
+			'Now': datetime.now(),
+			'Results': notifyList,
+			})
+
+
+
+	def notify_visited(self, data):
+		"""
+		通知查看确认
+		参数：
+			UserKey[string] – 用户会话ID
+			NotifyId[string] – 通知ID
+		返回值：
+			NotifyId[string] – 通知ID
 		"""
 		self.__reponseJSON({
 			'Now': datetime.now(),

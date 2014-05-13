@@ -422,32 +422,6 @@ def video_poster(data):
 	return None
 
 
-def video_dwz(data):
-	"""
-	获取视频播放短地址
-	方法：
-		video_dwz
-	参数：
-		UserKey[string] –用户登录后的会话ID。
-		VID[string] – 分配的视频ID
-	返回值：
-		VID[string] – 视频ID
-		URL[string] – 视频短地址
-	"""
-	userId = UserService.user_id(data['UserKey'])
-	db = MySQL()
-	videoInstance = db.get('SELECT * FROM `video` WHERE `id` = %s', (data['VID']))
-
-	if videoInstance:
-		VideoBaseURL = Config.get('Video','VideoBaseURL')
-		return {
-			'VID'   : videoInstance['id'],
-			'URL'   : ShortUrlService.createShortUrl("%s/%s.mp4" % (VideoBaseURL,videoInstance['id']))
-		}
-
-	return None
-
-
 def video_remove(data):
 	"""
 	删除视频
