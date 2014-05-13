@@ -6,12 +6,11 @@ from Downloader import Download
 
 import multiprocessing
 import httplib,json,re
-import tornado.web, tornado.ioloop, tornado.httpserver
+import tornado.web, tornado.ioloop, tornado.httpserver, tornado.template
 
 import StringIO
 import Config, Utils
 import UserService, UploadService, VideoService, ShareService, ShortUrlService
-
 
 class APIHandler(tornado.web.RequestHandler):
 
@@ -45,21 +44,25 @@ class APIHandler(tornado.web.RequestHandler):
 		if api != 'doc':
 			raise tornado.web.HTTPError(404)
 
-		self.set_header('Content-Type', 'text/plain; charset=UTF-8')
+		self.set_header('Content-Type', 'text/html; charset=UTF-8')
+
+		data = []
 		funlist = APIHandler.__dict__
-		output = StringIO.StringIO()
 		for m in sorted(funlist.iterkeys()):
 			doc = funlist[m].__doc__
 			if m[0] != '_' and doc:
-				output.write('================================================================================\n')
-				output.write(m)
-				output.write('\n')
+				lines = []
 				for line in doc.splitlines():
-					output.write(re.sub(r'^\t\t', '', line))
-					output.write('\n')
-				output.write('\n')
+					line = re.sub(r'^\t\t', '', line).strip()
+					if len(line) > 0:
+						lines.append(line)
+				data.append({
+					'name': m,
+					'lines': lines
+					})
 
-		self.write(output.getvalue())
+		loader = tornado.template.Loader("./tpl")
+		self.write(loader.load("doc.html").generate(data=data))
 
 
 	def __reponseJSON(self, data):
