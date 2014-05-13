@@ -131,7 +131,25 @@ def space_rename(data):
 
 
 def space_res_relation(data):
-	pass
+	userId = UserService.user_id(data['UserKey'])
+	newId = Utils.UUID()
+	db = MySQL()
+	
+	# TEST AUTHORIZE
+	# raise Error('更新失败或空间不存在')
+
+	result = db.update("INSERT INTO `space_resource` (`id`, `space_id`, `owner_id`, `res_type`, `res_id`, `order_field1`, `order_field2`, `order_field3`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", 
+					(newId, data.get('Id', ''), userId, data.get('ResType', ''), data.get('ResId', ''), data.get('OrderField1', None), data.get('OrderField2', None), data.get('OrderField3', None)))
+	db.end()
+
+	if result > 0:
+		return {
+			'Id': data.get('Id', ''),
+			'ResType': data.get('ResType', ''),
+			'ResId': data.get('ResId', ''),
+		}
+	else:
+		raise Error('更新失败或空间不存在')
 
 def space_res_unrelation(data):
 	pass
@@ -180,3 +198,12 @@ if __name__ == '__main__':
 				'Name': 'test-123' + datetime.now().strftime('%H:%M:%S'),
 			})
 		print json.dumps(space_list({ 'UserKey': sys.argv[1] }),sort_keys=False,indent=4)
+
+	for user in UserService.user_list():
+		spaceList = space_list({ 'UserKey': user['id'] })
+		if spaceList['Count'] == 0:
+			# create default space
+			newSpace = space_create({
+					'UserKey': user['id'],
+					'Name': '我的视光宝盒'
+				})

@@ -22,6 +22,8 @@ def user_mobile(userId):
 	user = user_get(userId, notRaise=True)
 	return user['mobile'] if user else None
 
+def user_list():
+	return MySQL().list("SELECT * FROM `user`")
 
 def getUserIdByMobile(mobile):
 	user = MySQL().get("SELECT * FROM `user` WHERE `mobile`=%s", mobile)
