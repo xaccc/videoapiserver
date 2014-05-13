@@ -136,7 +136,13 @@ def space_res_relation(data):
 	db = MySQL()
 	
 	# TEST AUTHORIZE
-	# raise Error('更新失败或空间不存在')
+	spaceInstance = db.get('SELECT * FROM `space` WHERE `id` = %s', (data.get('Id', '')))
+	if not spaceInstance:
+		raise Error('空间不存在')
+	elif userId != spaceInstance['user_id']:
+		authorized = db.get('SELECT COUNT(*) AS c FROM `space_authorize` WHERE `space_id`=%s AND `user_id` = %s AND `allow_edit` = 1', (data.get('Id', ''), userId))['c']
+		if authorized == 0:
+			raise Error('没有权限')
 
 	result = db.update("INSERT INTO `space_resource` (`id`, `space_id`, `owner_id`, `res_type`, `res_id`, `order_field1`, `order_field2`, `order_field3`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", 
 					(newId, data.get('Id', ''), userId, data.get('ResType', ''), data.get('ResId', ''), data.get('OrderField1', None), data.get('OrderField2', None), data.get('OrderField3', None)))
@@ -152,7 +158,29 @@ def space_res_relation(data):
 		raise Error('更新失败或空间不存在')
 
 def space_res_unrelation(data):
-	pass
+	userId = UserService.user_id(data['UserKey'])
+	db = MySQL()
+	
+	# TEST AUTHORIZE
+	spaceInstance = db.get('SELECT * FROM `space` WHERE `id` = %s', (data.get('Id', '')))
+	if not spaceInstance:
+		raise Error('空间不存在')
+	elif userId != spaceInstance['user_id']:
+		authorized = db.get('SELECT COUNT(*) AS c FROM `space_authorize` WHERE `space_id`=%s AND `user_id` = %s AND `allow_edit` = 1', (data.get('Id', ''), userId))['c']
+		if authorized == 0:
+			raise Error('没有权限')
+
+	result = db.delete("DELETE FROM `space_resource`  WHERE `space_id`=%s AND `res_type`=%s AND `res_id`=%s", 
+					(data.get('Id', ''), data.get('ResType', ''), data.get('ResId', '')))
+	db.end()
+	if result > 0:
+		return {
+			'Id': data.get('Id', ''),
+			'ResType': data.get('ResType', ''),
+			'ResId': data.get('ResId', ''),
+		}
+	else:
+		raise Error('删除失败或资源不存在')
 
 def space_res_order(data):
 	pass
