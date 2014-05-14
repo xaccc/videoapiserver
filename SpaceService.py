@@ -200,13 +200,16 @@ def space_res_order(data):
 def space_res_list(data):
 	userId = UserService.user_id(data['UserKey'])
 	if __test_auth_view(userId, data.get('Id', '')) > 0:
+		db = MySQL()
+
 		offset = long(data.get('Offset', 0))
 		sort = max(1, min(3, int(data.get('Sort', 1))))
 		order = int(data.get('Order', 0))
 		listMax = min(100, data.get('Max', 10))
+		
 		resCount = db.get("SELECT COUNT(*) AS c FROM `space_resource` WHERE `space_id` = %s AND `res_type`=%s", (data.get('Id', ''), data.get('ResType', '')))['c']
-		resList = db.list("SELECT * FROM `space_resource` WHERE `space_id` = %s AND `res_type`=%s ORDER BY `order_field" + str(sort) + "` %s LIMIT %s,%s", 
-							(data.get('Id', ''), data.get('ResType', ''), 'ASC' if order == 0 else 'DESC', offset, listMax))
+		resList = db.list("SELECT * FROM `space_resource` WHERE `space_id` = %s AND `res_type`=%s ORDER BY %s %s LIMIT %s,%s", 
+							(data.get('Id', ''), data.get('ResType', ''), 'order_field%s'%sort, 'ASC' if order == 0 else 'DESC', offset, listMax))
 		results = []
 		for res in resList:
 			results.append({
@@ -224,7 +227,7 @@ def space_res_list(data):
 			'Max': listMax,
 			'Sort': sort,
 			'Order': order,
-			'Results': results,
+			'Results': tuple(results)
 		}
 	else:
 		raise Error('没有权限或空间不存在')
@@ -314,29 +317,6 @@ def space_authorized_spaces(data):
 
 
 def space_authorized_resources(data):
-	"""
-	授权的资源列表
-	参数：
-		UserKey[string] – 用户会话ID
-		SpaceId[string] – 空间唯一编号
-		OwnerId[string] – 空间所有者用户ID[可选，SpaceId/OwnerId必须提供一个]
-		ResType[string] - 资源类型
-		Offset[long] – 列表起始位置。
-		Max[long] – 列表最大条数
-		Sort[int] - 排序字段编号[可选]，可选值：1~3
-		Order[int] - 排序方法[可选]，可选值：0-增序/1-降序
-	返回值：
-		ResType[string] - 资源类型
-		Count[long] – 列表数量（全部）
-		Offset[long] – 列表起始位置。
-		Max[long] – 列表最大条数
-		Sort[int] - 排序字段编号[可选]，可选值：1~3
-		Order[int] - 排序方法[可选]，可选值：0-增序/1-降序
-		Results[Array] – 授权的空间资源列表：
-			Id[string] – 所属空间唯一编号
-			Name[string] – 所属空间名称
-			ResId[string] - 资源唯一编号
-	"""
 	spaceIds = []
 	if data.get('SpaceId', None):
 		spaceIds.append(data.get('SpaceId'))
@@ -356,8 +336,8 @@ def space_authorized_resources(data):
 		prefixSelectSQL = 'SELECT * FROM `space_resource` WHERE `space_id` IN (%s)' % ', '.join(list(map(lambda x: '%s', spaceIds)))
 
 		resCount = db.get(prefixCountSQL + " AND `res_type`=%s", tuple(spaceIds) + (data.get('ResType', '')))['c']
-		resList = db.list(prefixSelectSQL + " AND `res_type`=%s ORDER BY `order_field" + str(sort) + "` %s LIMIT %s,%s", 
-							tuple(spaceIds) + (data.get('ResType', ''), 'ASC' if order == 0 else 'DESC', offset, listMax))
+		resList = db.list(prefixSelectSQL + " AND `res_type`=%s ORDER BY %s %s LIMIT %s,%s", 
+							tuple(spaceIds) + (data.get('ResType', ''), 'order_field%s'%sort, 'ASC' if order == 0 else 'DESC', offset, listMax))
 		results = []
 		for res in resList:
 			spaceInstance = space_get(res['space_id'])
@@ -377,7 +357,7 @@ def space_authorized_resources(data):
 			'Max': listMax,
 			'Sort': sort,
 			'Order': order,
-			'Results': results,
+			'Results': tuple(results),
 		}
 	else:
 		raise Error('没有可访问的空间')
@@ -452,11 +432,10 @@ if __name__ == '__main__':
 			})
 		print json.dumps(space_list({ 'UserKey': sys.argv[1] }),sort_keys=False,indent=4)
 
-	for user in UserService.user_list():
-		spaceList = space_list({ 'UserKey': user['id'] })
-		if spaceList['Count'] == 0:
-			# create default space
-			newSpace = space_create({
-					'UserKey': user['id'],
-					'Name': '我的视光宝盒'
-				})
+
+	xx = space_res_list({
+			'UserKey': '59977db2d5de49c385b6942fa025f252',
+			'Id': 'c95fb2b4148e47538f6c8958edd307e1',
+			'ResType': 'video'
+		})
+	
