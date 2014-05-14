@@ -814,7 +814,7 @@ class APIHandler(tornado.web.RequestHandler):
 				OwnerId[string] – 空间所有者用户ID
 				AllowEdit[int] – 是否允许修改，0-只读/1-可修改
 		"""
-		if not self.__has_params(data, ('UserKey','Id','UserId')):
+		if not self.__has_params(data, ('UserKey')):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
 		self.__reponseJSON(SpaceService.space_authorized_spaces(data))
@@ -833,6 +833,7 @@ class APIHandler(tornado.web.RequestHandler):
 			Sort[int] - 排序字段编号[可选]，可选值：1~3
 			Order[int] - 排序方法[可选]，可选值：0-增序/1-降序
 		返回值：
+			ResType[string] - 资源类型
 			Count[long] – 列表数量（全部）
 			Offset[long] – 列表起始位置。
 			Max[long] – 列表最大条数
@@ -840,10 +841,10 @@ class APIHandler(tornado.web.RequestHandler):
 			Order[int] - 排序方法[可选]，可选值：0-增序/1-降序
 			Results[Array] – 授权的空间资源列表：
 				Id[string] – 所属空间唯一编号
-				ResType[string] - 资源类型
+				Name[string] – 所属空间名称
 				ResId[string] - 资源唯一编号
 		"""
-		if not self.__has_params(data, ('UserKey','Id','UserId')):
+		if not self.__has_params(data, ('UserKey')):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
 		self.__reponseJSON(SpaceService.space_authorized_resources(data))
