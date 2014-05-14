@@ -174,6 +174,8 @@ def space_res_list(data):
 		sort = max(1, min(3, int(data.get('Sort', 1))))
 		order = int(data.get('Order', 0))
 		listMax = min(100, data.get('Max', 10))
+
+		print "SELECT * FROM `space_resource` WHERE `space_id` = %s AND `res_type`=%s ORDER BY %s %s LIMIT %s,%s" %	( (data.get('Id', ''), data.get('ResType', ''), 'order_field%s'%sort, 'DESC' if order == 0 else 'ASC', offset, listMax) )
 		
 		resCount = db.get("SELECT COUNT(*) AS c FROM `space_resource` WHERE `space_id` = %s AND `res_type`=%s", (data.get('Id', ''), data.get('ResType', '')))['c']
 		resList = db.list("SELECT * FROM `space_resource` WHERE `space_id` = %s AND `res_type`=%s ORDER BY %s %s LIMIT %s,%s", 
@@ -406,4 +408,7 @@ if __name__ == '__main__':
 			'Id': 'c95fb2b4148e47538f6c8958edd307e1',
 			'ResType': 'video'
 		})
+
+	print xx
 	
+	print json.dumps(xx,sort_keys=False,indent=4)
