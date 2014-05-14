@@ -10,8 +10,6 @@ import Utils
 import UserService
 
 
-
-
 def space_list(data):
 	userId = UserService.user_id(data['UserKey'])
 	db = MySQL()
@@ -177,7 +175,7 @@ def space_res_list(data):
 
 		resCount = db.get("SELECT COUNT(*) AS c FROM `space_resource` WHERE `space_id` = %s AND `res_type`=%s", (data.get('Id', ''), data.get('ResType', '')))['c']
 		resList = db.list("SELECT * FROM `space_resource` WHERE `space_id` = %s AND `res_type`=%s", 
-							(data.get('Id', ''), data.get('ResType', '')), sort='order_field%s'%sort, order='DESC' if order == 0 else 'ASC', offset=offset, max=listMax )
+							(data.get('Id', ''), data.get('ResType', '')), sort='order_field%s'%sort, order='DESC' if order == 0 else 'ASC', offset=offset, pagesize=listMax )
 		results = []
 		print resList
 		for res in resList:
@@ -307,7 +305,7 @@ def space_authorized_resources(data):
 
 		resCount = db.get(prefixCountSQL + " AND `res_type`=%s", tuple(spaceIds) + (data.get('ResType', '')))['c']
 		resList = db.list(prefixSelectSQL + " AND `res_type`=%s", 
-							tuple(spaceIds) + (data.get('ResType', '')), sort='order_field%s'%sort, order='DESC' if order == 0 else 'ASC', offset=offset, max=listMax)
+							tuple(spaceIds) + (data.get('ResType', '')), sort='order_field%s'%sort, order='DESC' if order == 0 else 'ASC', offset=offset, pagesize=listMax)
 		results = []
 		for res in resList:
 			spaceInstance = space_get(res['space_id'])

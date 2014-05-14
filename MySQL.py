@@ -96,7 +96,7 @@ class MySQL(object):
 	#
 	#######################################
 
-	def list(self, sql, param=None, sort=None, order=None, offset=None, max=None):
+	def list(self, sql, param=None, sort=None, order=None, offset=None, pagesize=None):
 		"""
 		@summary: 执行查询，并取出所有结果集
 		@param sql:查询ＳＱＬ，如果有查询条件，请只指定条件列表，并将条件值使用参数[param]传递进来
@@ -106,8 +106,8 @@ class MySQL(object):
 
 		if sort:
 			sql += " ORDER BY `%s` %s" % (sort, order if order else 'ASC')
-		if offset and max:
-			sql += " LIMIT %l,%d" % (long(offset), int(max))
+		if offset != None and pagesize != None:
+			sql += " LIMIT %s,%s" % (long(offset), int(pagesize))
 
 		if param is None:
 			count = self._cursor.execute(sql)

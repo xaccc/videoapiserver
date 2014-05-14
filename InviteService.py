@@ -125,3 +125,7 @@ def invite_deal(data):
 
 
 
+if __name__ == '__main__':
+	invite_code({
+			'UserKey':
+		})
