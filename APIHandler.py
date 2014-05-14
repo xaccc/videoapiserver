@@ -918,6 +918,9 @@ class APIHandler(tornado.web.RequestHandler):
 			InviterId[string] – 邀请者UserId
 			Inviter[string] – 邀请者姓名
 			InviteDate[date] – 邀请日期
+			IsDeal[boolean] - 0-未接受/1-已经接受
+			DealUserId[string] - 接受邀请用户ID
+			DealDate[date] – 接受邀请日期
 			Info[string] – 邀请信息
 		"""
 		if not self.__has_params(data, ('Code')):

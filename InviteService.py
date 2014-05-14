@@ -11,77 +11,117 @@ import UserService
 
 
 def invite_code(data):
-    pass
+	userId = UserService.user_id(data['UserKey'])
+	db = MySQL()
 
+	code = Utils.UUID()
+	result = db.save("INSERT INTO `invite` (`id`, `user_id`, `type`, `refer_id`, `info`) VALUES (%s,%s,%s,%s,%s)", 
+					(code, userId, data.get('Type', None), data.get('ReferId', None), data.get('Info', None)))
+	db.end()
 
-def invite_code(data):
-    """
-    申请邀请码
-    参数：
-        UserKey[string] – 用户会话ID
-        Type[string] - 邀请类型
-        ReferId[string] - 引用对象ID
-        Info[string] – 邀请信息
-    返回值：
-        Code[string] – 邀请码
-    """
-    pass
+	return {
+		'Code': code,
+	}
 
 
 def invite_list(data):
-    """
-    我的邀请列表
-    参数：
-        UserKey[string] – 用户会话ID
-        Type[string] - 邀请类型
-    返回值：
-        Type[string] - 邀请类型
-        Results[Array] – 授权对象列表：
-            Code[string] – 邀请码
-            IsDeal[boolean] - 0-未接受/1-已经接受
-            DealUserId[string] - 接受邀请用户ID
-            InviteDate[date] – 邀请日期
-            DealDate[date] – 接受邀请日期
-            ReferId[string] - 引用对象ID
-    """
-    pass
+	userId = UserService.user_id(data['UserKey'])
+	db = MySQL()
+
+	inviteListInstance = db.list('SELECT * FROM `invite` WHERE `user_id` = %s AND `type` = %s', (userId, data.get('Type', None)), sort='invite_date', order='DESC')
+	
+	results = []
+	for invite in inviteListInstance:
+		results.append({
+				'Code': invite['id'],
+				'InviteDate': invite['invite_date'],
+				'ReferId': invite['refer_id'],
+				'IsDeal': invite['is_deal'],
+				'DealUserId': invite['deal_user_id'],
+				'DealDate': invite['deal_date'],
+				'IsPocket': invite['is_pocket'],
+				'PocketDate': invite['pocket_date'],
+			})
+
+	return {
+		'Type': data.get('Type', None),
+		'Count': len(results),
+		'Results': results,
+	}
+
 
 def invite_pocket(data):
-    """
-    完成邀请处理
-    参数：
-        UserKey[string] – 用户会话ID
-        Code[string] – 邀请码
-    返回值：
-        Code[string] – 邀请码
-    """
-    pass
+	userId = UserService.user_id(data['UserKey'])
+	db = MySQL()
+	result = db.update("UPDATE `invite` SET `is_pocket` = 1, `pocket_date` = now() WHERE `user_id` = %s AND `id` = %s", (userId, data.get('Code', None)))
+	db.end()
+	if result > 0:
+		return {
+			'Code': data.get('Code', None)
+		}
+	else:
+		raise Error('邀请码不存在或已处理')
 
 
 def invite_info(data):
-    """
-    邀请信息
-    参数：
-        Code[string] – 邀请码
-    返回值：
-        Code[string] – 邀请码
-        Type[string] - 邀请类型
-        ReferId[string] - 引用对象ID
-        InviterId[string] – 邀请者UserId
-        Inviter[string] – 邀请者姓名
-        InviteDate[date] – 邀请日期
-        Info[string] – 邀请信息
-    """
-    pass
+	"""
+	邀请信息
+	参数：
+		Code[string] – 邀请码
+	返回值：
+		Code[string] – 邀请码
+		Type[string] - 邀请类型
+		ReferId[string] - 引用对象ID
+		InviterId[string] – 邀请者UserId
+		Inviter[string] – 邀请者姓名
+		InviteDate[date] – 邀请日期
+		Info[string] – 邀请信息
+	"""
+	db = MySQL()
+
+	invite = db.get('SELECT * FROM `invite` WHERE `id` = %s', (data.get('Code', None)))
+
+	if not invite:
+		raise Error('邀请码不存在')
+
+	inviter = UserService.user_get(invite['user_id'])
+	
+	return {
+			'Code': invite['id'],
+			'Type': invite['type'],
+			'Inviter': inviter['name'],
+			'InviterId': invite['user_id'],
+			'InviteDate': invite['invite_date'],
+			'ReferId': invite['refer_id'],
+			'IsDeal': invite['is_deal'],
+			'DealUserId': invite['deal_user_id'],
+			'DealDate': invite['deal_date'],
+			'IsPocket': invite['is_pocket'],
+			'PocketDate': invite['pocket_date'],
+			'Info': invite['info'],
+		}
+
 
 
 def invite_deal(data):
-    """
-    接受邀请
-    参数：
-        UserKey[string] – 用户会话ID
-        Code[string] – 邀请码
-    返回值：
-        Code[string] – 邀请码
-    """
-    pass
+	"""
+	接受邀请
+	参数：
+		UserKey[string] – 用户会话ID
+		Code[string] – 邀请码
+	返回值：
+		Code[string] – 邀请码
+	"""
+	userId = UserService.user_id(data['UserKey'])
+	db = MySQL()
+	result = db.update("UPDATE `invite` SET `is_deal` = 1, `deal_date` = now(), `deal_user_id` = %s WHERE `id` = %s", (userId, data.get('Code', None)))
+	db.end()
+	if result > 0:
+		return {
+			'Code': data.get('Code', None)
+		}
+	else:
+		raise Error('邀请码不存在或已处理')
+
+
+

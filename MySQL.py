@@ -96,13 +96,19 @@ class MySQL(object):
 	#
 	#######################################
 
-	def list(self, sql, param=None):
+	def list(self, sql, param=None, sort=None, order=None, offset=None, max=None):
 		"""
 		@summary: 执行查询，并取出所有结果集
 		@param sql:查询ＳＱＬ，如果有查询条件，请只指定条件列表，并将条件值使用参数[param]传递进来
 		@param param: 可选参数，条件列表值（元组/列表）
 		@return: result list/boolean 查询到的结果集
 		"""
+
+		if sort:
+			sql += " ORDER BY `%s` %s" % (sort, order if order else 'ASC')
+		if offset and max:
+			sql += " LIMIT %l,%d" % (long(offset), int(max))
+
 		if param is None:
 			count = self._cursor.execute(sql)
 		else:

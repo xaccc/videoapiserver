@@ -16,7 +16,7 @@ def space_list(data):
 	userId = UserService.user_id(data['UserKey'])
 	db = MySQL()
 
-	spaceListInstance = db.list('SELECT * FROM `space` WHERE `user_id` = %s ORDER BY `index`', (userId))
+	spaceListInstance = db.list('SELECT * FROM `space` WHERE `user_id` = %s ORDER BY `index` ASC', (userId))
 	
 	results = []
 	for space in spaceListInstance:
@@ -60,7 +60,7 @@ def space_reindex(data):
 	afterId = data.get('After', '')
 
 	index = []
-	spaceListInstance = db.list('SELECT * FROM `space` WHERE `user_id` = %s ORDER BY `index`', (userId))
+	spaceListInstance = db.list('SELECT * FROM `space` WHERE `user_id` = %s ORDER BY `index` ASC', (userId))
 	for space in spaceListInstance:
 		index.append(space['id'])
 
@@ -175,13 +175,13 @@ def space_res_list(data):
 		order = int(data.get('Order', 0))
 		listMax = min(100, data.get('Max', 10))
 
-		print "SELECT * FROM `space_resource` WHERE `space_id` = %s AND `res_type`=%s ORDER BY %s %s LIMIT %s,%s" %	( (data.get('Id', ''), data.get('ResType', ''), 'order_field%s'%sort, 'DESC' if order == 0 else 'ASC', offset, listMax) )
-		
 		resCount = db.get("SELECT COUNT(*) AS c FROM `space_resource` WHERE `space_id` = %s AND `res_type`=%s", (data.get('Id', ''), data.get('ResType', '')))['c']
-		resList = db.list("SELECT * FROM `space_resource` WHERE `space_id` = %s AND `res_type`=%s ORDER BY %s %s LIMIT %s,%s", 
-							(data.get('Id', ''), data.get('ResType', ''), 'order_field%s'%sort, 'DESC' if order == 0 else 'ASC', offset, listMax))
+		resList = db.list("SELECT * FROM `space_resource` WHERE `space_id` = %s AND `res_type`=%s", 
+							(data.get('Id', ''), data.get('ResType', '')), sort='order_field%s'%sort, order='DESC' if order == 0 else 'ASC', offset=offset, max=listMax )
 		results = []
+		print resList
 		for res in resList:
+			print "%s,%s" % (res['res_id'], res['order_field1'])
 			results.append({
 					'ResId': res['res_id'],
 					'OrderField1': res['order_field1'],
@@ -306,8 +306,8 @@ def space_authorized_resources(data):
 		prefixSelectSQL = 'SELECT * FROM `space_resource` WHERE `space_id` IN (%s)' % ', '.join(list(map(lambda x: '%s', spaceIds)))
 
 		resCount = db.get(prefixCountSQL + " AND `res_type`=%s", tuple(spaceIds) + (data.get('ResType', '')))['c']
-		resList = db.list(prefixSelectSQL + " AND `res_type`=%s ORDER BY %s %s LIMIT %s,%s", 
-							tuple(spaceIds) + (data.get('ResType', ''), 'order_field%s'%sort, 'DESC' if order == 0 else 'ASC', offset, listMax))
+		resList = db.list(prefixSelectSQL + " AND `res_type`=%s", 
+							tuple(spaceIds) + (data.get('ResType', '')), sort='order_field%s'%sort, order='DESC' if order == 0 else 'ASC', offset=offset, max=listMax)
 		results = []
 		for res in resList:
 			spaceInstance = space_get(res['space_id'])
