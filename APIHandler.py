@@ -869,9 +869,9 @@ class APIHandler(tornado.web.RequestHandler):
 		返回值：
 			Code[string] – 邀请码
 		"""
-		self.__reponseJSON({
-			'Now': datetime.now(),
-			})
+		if not self.__has_params(data, ('UserKey')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+		self.__reponseJSON(InviteService.invite_code(data))
 
 
 	def invite_list(self, data):
@@ -890,9 +890,9 @@ class APIHandler(tornado.web.RequestHandler):
 				DealDate[date] – 接受邀请日期
 				ReferId[string] - 引用对象ID
 		"""
-		self.__reponseJSON({
-			'Now': datetime.now(),
-			})
+		if not self.__has_params(data, ('UserKey')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+		self.__reponseJSON(InviteService.invite_list(data))
 
 	def invite_pocket(self, data):
 		"""
@@ -903,9 +903,7 @@ class APIHandler(tornado.web.RequestHandler):
 		返回值：
 			Code[string] – 邀请码
 		"""
-		self.__reponseJSON({
-			'Now': datetime.now(),
-			})
+		self.__reponseJSON(InviteService.invite_pocket(data))
 
 
 	def invite_info(self, data):
@@ -922,9 +920,9 @@ class APIHandler(tornado.web.RequestHandler):
 			InviteDate[date] – 邀请日期
 			Info[string] – 邀请信息
 		"""
-		self.__reponseJSON({
-			'Now': datetime.now(),
-			})
+		if not self.__has_params(data, ('Code')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+		self.__reponseJSON(InviteService.invite_info(data))
 
 
 	def invite_deal(self, data):
@@ -936,9 +934,10 @@ class APIHandler(tornado.web.RequestHandler):
 		返回值：
 			Code[string] – 邀请码
 		"""
-		self.__reponseJSON({
-			'Now': datetime.now(),
-			})
+		if not self.__has_params(data, ('UserKey')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+			
+		self.__reponseJSON(InviteService.invite_deal(data))
 
 
 	###########################################################################

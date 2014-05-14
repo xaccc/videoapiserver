@@ -10,38 +10,6 @@ import Utils
 import UserService
 
 
-__create_table_script = """
-CREATE TABLE IF NOT EXISTS `space` (
-  `id` char(32) COLLATE utf8_bin NOT NULL,
-  `user_id` char(32) COLLATE utf8_bin NOT NULL,
-  `name` varchar(100) COLLATE utf8_bin NOT NULL,
-  `index` int(11) NOT NULL DEFAULT '0',
-  `create_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `user_id` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-
-CREATE TABLE IF NOT EXISTS `space_authorize` (
-  `space_id` char(32) COLLATE utf8_bin NOT NULL,
-  `user_id` char(32) COLLATE utf8_bin NOT NULL,
-  `allow_edit` tinyint(1) NOT NULL DEFAULT '0',
-  KEY `space_id` (`space_id`,`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-
-CREATE TABLE IF NOT EXISTS `space_resource` (
-  `id` char(32) COLLATE utf8_bin NOT NULL,
-  `space_id` char(32) COLLATE utf8_bin NOT NULL,
-  `owner_id` char(32) COLLATE utf8_bin NOT NULL,
-  `res_type` varchar(20) COLLATE utf8_bin NOT NULL,
-  `res_id` char(20) COLLATE utf8_bin NOT NULL,
-  `order_field1` int(11) DEFAULT NULL,
-  `order_field2` int(11) DEFAULT NULL,
-  `order_field3` int(11) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `space_id` (`space_id`)
-  KEY `res_id` (`res_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-"""
 
 
 def space_list(data):
@@ -209,7 +177,7 @@ def space_res_list(data):
 		
 		resCount = db.get("SELECT COUNT(*) AS c FROM `space_resource` WHERE `space_id` = %s AND `res_type`=%s", (data.get('Id', ''), data.get('ResType', '')))['c']
 		resList = db.list("SELECT * FROM `space_resource` WHERE `space_id` = %s AND `res_type`=%s ORDER BY %s %s LIMIT %s,%s", 
-							(data.get('Id', ''), data.get('ResType', ''), 'order_field%s'%sort, 'ASC' if order == 0 else 'DESC', offset, listMax))
+							(data.get('Id', ''), data.get('ResType', ''), 'order_field%s'%sort, 'DESC' if order == 0 else 'ASC', offset, listMax))
 		results = []
 		for res in resList:
 			results.append({
@@ -227,7 +195,7 @@ def space_res_list(data):
 			'Max': listMax,
 			'Sort': sort,
 			'Order': order,
-			'Results': tuple(results)
+			'Results': results
 		}
 	else:
 		raise Error('没有权限或空间不存在')
@@ -337,7 +305,7 @@ def space_authorized_resources(data):
 
 		resCount = db.get(prefixCountSQL + " AND `res_type`=%s", tuple(spaceIds) + (data.get('ResType', '')))['c']
 		resList = db.list(prefixSelectSQL + " AND `res_type`=%s ORDER BY %s %s LIMIT %s,%s", 
-							tuple(spaceIds) + (data.get('ResType', ''), 'order_field%s'%sort, 'ASC' if order == 0 else 'DESC', offset, listMax))
+							tuple(spaceIds) + (data.get('ResType', ''), 'order_field%s'%sort, 'DESC' if order == 0 else 'ASC', offset, listMax))
 		results = []
 		for res in resList:
 			spaceInstance = space_get(res['space_id'])
@@ -357,7 +325,7 @@ def space_authorized_resources(data):
 			'Max': listMax,
 			'Sort': sort,
 			'Order': order,
-			'Results': tuple(results),
+			'Results': results,
 		}
 	else:
 		raise Error('没有可访问的空间')
