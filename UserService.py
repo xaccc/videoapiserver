@@ -97,6 +97,10 @@ def user_auth(data):
 			# TODO: 是否需要生成默认用户名和密码？
 			result = db.save("INSERT INTO `user` (`id`, `mobile`) VALUES (%s,%s)", (userId, data['Id']))
 			db.end()
+			
+			# 关联新用户数据
+			db.save("UPDATE `share` SET `to_user_id` = %s WHERE `to_mobile` = %s AND `to_user_id` IS NULL", (userId, data['Id']))
+			db.end()
 	else:
 		#
 		# 通过 用户名/邮箱 + 密码 方式登录

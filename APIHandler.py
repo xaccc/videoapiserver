@@ -752,7 +752,7 @@ class APIHandler(tornado.web.RequestHandler):
 			UserKey[string] – 用户会话ID
 			Id[string] – 空间唯一编号
 			UserId[string] – 授权用户ID
-			AllowEdit[int] – 是否允许修改[可选]，0-只读(默认)/1-可修改
+			AllowEdit[int] – 是否允许修改[可选]，0-只读(默认)/1-可修改，Allow=0，忽略该参数
 		返回值：
 			Id[string] – 空间唯一编号
 			Name[string] – 空间名称
@@ -764,6 +764,22 @@ class APIHandler(tornado.web.RequestHandler):
 			raise tornado.web.HTTPError(400, '参数 Error')
 
 		self.__reponseJSON(SpaceService.space_authorize(data))
+
+	def space_unauthorize(self, data):
+		"""
+		用户个人空间取消授权
+		参数：
+			UserKey[string] – 用户会话ID
+			Id[string] – 空间唯一编号
+			UserId[string] – 取消授权用户ID
+		返回值：
+			Id[string] – 空间唯一编号
+			UserId[string] – 取消授权用户ID
+		"""
+		if not self.__has_params(data, ('UserKey','Id','UserId')):
+			raise tornado.web.HTTPError(400, '参数 Error')
+
+		self.__reponseJSON(SpaceService.space_unauthorize(data))
 
 	def space_authorize_list(self, data):
 		"""
@@ -791,7 +807,7 @@ class APIHandler(tornado.web.RequestHandler):
 		参数：
 			UserKey[string] – 用户会话ID
 		返回值：
-			Results[Array] – 授权的对象列表：
+			[Array] – 授权的对象列表：
 				Id[string] – 空间唯一编号
 				Name[string] – 空间名称
 				Owner[string] – 空间所有者
@@ -847,6 +863,7 @@ class APIHandler(tornado.web.RequestHandler):
 		参数：
 			UserKey[string] – 用户会话ID
 			Type[string] - 邀请类型
+			ReferId[string] - 引用对象ID
 			Info[string] – 邀请信息
 		返回值：
 			Code[string] – 邀请码
@@ -870,6 +887,7 @@ class APIHandler(tornado.web.RequestHandler):
 				DealUserId[string] - 接受邀请用户ID
 				InviteDate[date] – 邀请日期
 				DealDate[date] – 接受邀请日期
+				ReferId[string] - 引用对象ID
 		"""
 		self.__reponseJSON({
 			'Now': datetime.now(),
@@ -897,6 +915,7 @@ class APIHandler(tornado.web.RequestHandler):
 		返回值：
 			Code[string] – 邀请码
 			Type[string] - 邀请类型
+			ReferId[string] - 引用对象ID
 			InviterId[string] – 邀请者UserId
 			Inviter[string] – 邀请者姓名
 			InviteDate[date] – 邀请日期

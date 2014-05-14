@@ -225,7 +225,7 @@ def video_list(data):
 	sort = data.get('Sort', 'create_time')
 	order = data.get('Order', 'DESC')
 	listMax = min(100, data.get('Max', 10))
-	count = long(db.get('SELECT count(id) as c FROM `video` WHERE `owner_id` = %s', userId).get('c'))
+	count = long(db.get('SELECT count(*) as c FROM `video` WHERE `owner_id` = %s', userId).get('c'))
 
 	results = []
 

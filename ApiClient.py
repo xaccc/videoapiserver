@@ -124,18 +124,6 @@ class ApiClient(object):
 				'Time'		: float(ss)
 				})
 
-	def video_dwz(self, vid):
-		return self.__postJSON(baseURL + '/video_dwz', {
-				'UserKey'	: self.userKey,
-				'VID'		: vid
-				})
-
-	def video_qrcode(self, vid):
-		return self.__postJSON(baseURL + '/video_qrcode', {
-				'UserKey'	: self.userKey,
-				'VID'		: vid
-				})
-
 	def share_video(self, id, toList):
 		return self.__postJSON(baseURL + '/share_video', {
 				'UserKey'	: self.userKey,
@@ -181,9 +169,9 @@ if __name__ == '__main__':
 	# test user_*
 	device = 'TEST'
 	print '==============user_validate============='
-	print json.dumps(api.user_validate('18636636365',device),sort_keys=False,indent=4)
+	print json.dumps(api.user_validate('18636636360',device),sort_keys=False,indent=4)
 	print '==============user_auth============='
-	print json.dumps(api.user_auth('18636636365',device,'0147258369'),sort_keys=False,indent=4)
+	print json.dumps(api.user_auth('18636636360',device,'0147258369'),sort_keys=False,indent=4)
 	print '==============user_id============='
 	print json.dumps(api.user_id(),sort_keys=False,indent=4)
 
@@ -258,11 +246,7 @@ if __name__ == '__main__':
 		video = api.video_ready(videoId)
 		print json.dumps(video,sort_keys=False,indent=4)
 
-		# video_dwz
-		print "============================video_dwz===================================="
-		print json.dumps(api.video_dwz(videoId),sort_keys=False,indent=4)
-
-		# video_qrcode
+		# short_url
 		print "============================short_url===================================="
 		surl = api.short_url(video_list['Results'][0]['VideoURLs'][0])
 		print json.dumps(surl,sort_keys=False,indent=4)
