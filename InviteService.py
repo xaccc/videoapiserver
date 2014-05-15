@@ -28,7 +28,7 @@ def invite_list(data):
 	userId = UserService.user_id(data['UserKey'])
 	db = MySQL()
 
-	inviteListInstance = db.list('SELECT * FROM `invite` WHERE `invite_date` >= NOW() - INTERVAL 60 DAY AND `is_pocket` = 1 AND `user_id` = %s AND `type` = %s', (userId, data.get('Type', None)), sort='invite_date', order='DESC')
+	inviteListInstance = db.list('SELECT * FROM `invite` WHERE `invite_date` >= NOW() - INTERVAL 60 DAY AND `is_pocket` <> 1 AND `user_id` = %s AND `type` = %s', (userId, data.get('Type', None)), sort='invite_date', order='DESC')
 	
 	results = []
 	for invite in inviteListInstance:
