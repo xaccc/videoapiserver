@@ -372,9 +372,25 @@ def __test_auth_view(userId, spaceId):
 
 
 
+import unittest
+class Test(unittest.TestCase):
+	def setUp(self):
+		pass
 
+	def tearDown(self):
+		pass
+
+	def testCreate(self):
+		newSpace = space_create({
+				'UserKey': sys.argv[1],
+				'Name': '测试空间ABC'
+			})
+		pass
 
 if __name__ == '__main__':
+
+	unittest.main()
+
 	import sys, json
 
 	if len(sys.argv) > 1:

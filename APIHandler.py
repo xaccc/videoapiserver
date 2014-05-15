@@ -939,7 +939,7 @@ class APIHandler(tornado.web.RequestHandler):
 		"""
 		if not self.__has_params(data, ('UserKey')):
 			raise tornado.web.HTTPError(400, '参数 Error')
-			
+
 		self.__reponseJSON(InviteService.invite_deal(data))
 
 

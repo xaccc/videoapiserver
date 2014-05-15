@@ -28,17 +28,19 @@ def invite_list(data):
 	userId = UserService.user_id(data['UserKey'])
 	db = MySQL()
 
-	inviteListInstance = db.list('SELECT * FROM `invite` WHERE `user_id` = %s AND `type` = %s', (userId, data.get('Type', None)), sort='invite_date', order='DESC')
+	inviteListInstance = db.list('SELECT * FROM `invite` WHERE `invite_date` >= NOW() - INTERVAL 60 DAY AND `is_pocket` = 1 AND `user_id` = %s AND `type` = %s', (userId, data.get('Type', None)), sort='invite_date', order='DESC')
 	
 	results = []
 	for invite in inviteListInstance:
+		dealUser = UserService.user_get(invite['deal_user_id'], notRaise = True) if invite['deal_user_id'] else None
 		results.append({
 				'Code': invite['id'],
 				'InviteDate': invite['invite_date'],
 				'ReferId': invite['refer_id'],
 				'IsDeal': invite['is_deal'],
-				'DealUserId': invite['deal_user_id'],
-				'DealDate': invite['deal_date'],
+				'DealUserId': invite['deal_user_id'] if dealUser else None,
+				'DealUser': dealUser['name'] if dealUser else None,
+				'DealDate': invite['deal_date'] if dealUser else None,
 				'IsPocket': invite['is_pocket'],
 				'PocketDate': invite['pocket_date'],
 			})
@@ -53,7 +55,7 @@ def invite_list(data):
 def invite_pocket(data):
 	userId = UserService.user_id(data['UserKey'])
 	db = MySQL()
-	result = db.update("UPDATE `invite` SET `is_pocket` = 1, `pocket_date` = now() WHERE `user_id` = %s AND `id` = %s", (userId, data.get('Code', None)))
+	result = db.update("UPDATE `invite` SET `is_pocket` = 1, `pocket_date` = now() WHERE `user_id` = %s AND `id` = %s AND `is_pocket` <> 1", (userId, data.get('Code', None)))
 	db.end()
 	if result > 0:
 		return {
@@ -84,8 +86,9 @@ def invite_info(data):
 	if not invite:
 		raise Error('邀请码不存在')
 
-	inviter = UserService.user_get(invite['user_id'])
-	
+	inviter = UserService.user_get(invite['user_id'], notRaise = True)
+	dealUser = UserService.user_get(invite['deal_user_id'], notRaise = True) if invite['deal_user_id'] else None
+
 	return {
 			'Code': invite['id'],
 			'Type': invite['type'],
@@ -94,10 +97,11 @@ def invite_info(data):
 			'InviteDate': invite['invite_date'],
 			'ReferId': invite['refer_id'],
 			'IsDeal': invite['is_deal'],
-			'DealUserId': invite['deal_user_id'],
-			'DealDate': invite['deal_date'],
+			'DealUser': dealUser['name'] if dealUser else None,
+			'DealUserId': invite['deal_user_id'] if dealUser else None,
+			'DealDate': invite['deal_date'] if dealUser else None,
 			'IsPocket': invite['is_pocket'],
-			'PocketDate': invite['pocket_date'],
+			'PocketDate': invite['pocket_date'] if invite['is_pocket'] else None,
 			'Info': invite['info'],
 		}
 
@@ -114,7 +118,7 @@ def invite_deal(data):
 	"""
 	userId = UserService.user_id(data['UserKey'])
 	db = MySQL()
-	result = db.update("UPDATE `invite` SET `is_deal` = 1, `deal_date` = now(), `deal_user_id` = %s WHERE `id` = %s", (userId, data.get('Code', None)))
+	result = db.update("UPDATE `invite` SET `is_deal` = 1, `deal_date` = now(), `deal_user_id` = %s WHERE `id` = %s AND `is_deal` <> 1", (userId, data.get('Code', None)))
 	db.end()
 	if result > 0:
 		return {
@@ -130,4 +134,3 @@ if __name__ == '__main__':
 
 
 
-	
