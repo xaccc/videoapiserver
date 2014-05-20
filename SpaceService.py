@@ -228,7 +228,7 @@ def space_unauthorize(data):
 	if userId == spaceInstance['user_id']:
 		db = MySQL()
 		result = db.delete("DELETE FROM `space_authorize` WHERE `space_id`=%s AND `user_id`=%s", 
-						(data.get('Id', ''), data.get('UserId', ''), allowEdit))
+						(data.get('Id', ''), data.get('UserId', '')))
 		db.end()
 		if result > 0:
 			return {
