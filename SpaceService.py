@@ -63,7 +63,7 @@ def space_reindex(data):
 		index.append(space['id'])
 
 	if not spaceId in index:
-		raise Error('空间不存在')
+		raise Exception('空间不存在')
 
 	index.remove(spaceId)
 	if afterId == 'HEAD':
@@ -94,7 +94,7 @@ def space_rename(data):
 			'Name': data.get('Name', ''),
 		}
 	else:
-		raise Error('更新失败或空间不存在')
+		raise Exception('更新失败或空间不存在')
 
 
 def space_res_relation(data):
@@ -115,9 +115,9 @@ def space_res_relation(data):
 				'ResId': data.get('ResId', ''),
 			}
 		else:
-			raise Error('更新失败或空间不存在')
+			raise Exception('更新失败或空间不存在')
 	else:
-		raise Error('没有权限或空间不存在')
+		raise Exception('没有权限或空间不存在')
 
 
 def space_res_unrelation(data):
@@ -136,9 +136,9 @@ def space_res_unrelation(data):
 				'ResId': data.get('ResId', ''),
 			}
 		else:
-			raise Error('删除失败或资源不存在')
+			raise Exception('删除失败或资源不存在')
 	else:
-		raise Error('没有权限或空间不存在')
+		raise Exception('没有权限或空间不存在')
 
 
 def space_res_order(data):
@@ -159,9 +159,9 @@ def space_res_order(data):
 				'ResId': data.get('ResId', ''),
 			}
 		else:
-			raise Error('更新失败或空间不存在')
+			raise Exception('更新失败或空间不存在')
 	else:
-		raise Error('没有权限或空间不存在')
+		raise Exception('没有权限或空间不存在')
 
 def space_res_list(data):
 	userId = UserService.user_id(data['UserKey'])
@@ -196,7 +196,7 @@ def space_res_list(data):
 			'Results': results
 		}
 	else:
-		raise Error('没有权限或空间不存在')
+		raise Exception('没有权限或空间不存在')
 
 
 def space_authorize(data):
@@ -217,7 +217,7 @@ def space_authorize(data):
 			'AllowEdit': allowEdit,
 		}
 	else:
-		raise Error('没有权限或空间不存在')
+		raise Exception('没有权限或空间不存在')
 
 
 def space_unauthorize(data):
@@ -234,9 +234,9 @@ def space_unauthorize(data):
 				'UserId': data.get('UserId', ''),
 			}
 		else:
-			raise Error('删除失败或授权不存在')
+			raise Exception('删除失败或授权不存在')
 	else:
-		raise Error('没有权限或空间不存在')
+		raise Exception('没有权限或空间不存在')
 
 
 def space_authorize_list(data):
@@ -259,7 +259,7 @@ def space_authorize_list(data):
 			'Results': results
 		}
 	else:
-		raise Error('没有权限或空间不存在')
+		raise Exception('没有权限或空间不存在')
 
 
 def space_authorized_spaces(data):
@@ -270,14 +270,15 @@ def space_authorized_spaces(data):
 	results=[]
 	for item in db.list("SELECT DISTINCT * FROM `space_authorize` WHERE `user_id`=%s", userId):
 		spaceInstance = space_get(item['space_id'])
-		spaceOwner = UserService.user_get(spaceInstance['user_id'], True)
-		results.append({
-				'Id': spaceInstance['id'],
-				'Name': spaceInstance['name'],
-				'Owner': spaceOwner['name'] if spaceOwner else None,
-				'OwnerId': spaceInstance['user_id'],
-				'AllowEdit': item['allow_edit']
-			})
+		if spaceInstance:
+			spaceOwner = UserService.user_get(spaceInstance['user_id'], notRaise=True)
+			results.append({
+					'Id': spaceInstance['id'],
+					'Name': spaceInstance['name'],
+					'Owner': spaceOwner['name'] if spaceOwner else None,
+					'OwnerId': spaceInstance['user_id'],
+					'AllowEdit': item['allow_edit']
+				})
 
 	return {
 		'Count': len(results),
@@ -330,7 +331,7 @@ def space_authorized_resources(data):
 			'Results': results,
 		}
 	else:
-		raise Error('没有可访问的空间')
+		raise Exception('没有可访问的空间')
 
 
 

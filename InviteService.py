@@ -62,7 +62,7 @@ def invite_pocket(data):
 			'Code': data.get('Code', None)
 		}
 	else:
-		raise Error('邀请码不存在或已处理')
+		raise Exception('邀请码不存在或已处理')
 
 
 def invite_info(data):
@@ -84,7 +84,7 @@ def invite_info(data):
 	invite = db.get('SELECT * FROM `invite` WHERE `id` = %s', (data.get('Code', None)))
 
 	if not invite:
-		raise Error('邀请码不存在')
+		raise Exception('邀请码不存在')
 
 	inviter = UserService.user_get(invite['user_id'], notRaise = True)
 	dealUser = UserService.user_get(invite['deal_user_id'], notRaise = True) if invite['deal_user_id'] else None
@@ -125,7 +125,7 @@ def invite_deal(data):
 			'Code': data.get('Code', None)
 		}
 	else:
-		raise Error('邀请码不存在或已处理')
+		raise Exception('邀请码不存在或已处理')
 
 
 

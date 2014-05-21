@@ -65,19 +65,6 @@ def user_validate(data):
 
 
 def user_auth(data):
-	"""
-	验证用户身份
-	方法：
-		login
-	参数：
-		Id[string] – 用户手机号码/用户名/绑定邮箱等相关支持方式的Id
-		Device[string] – 登录设备名称
-		Validate[string] – 验证码（通过调用vaildate接口下发的验证码，由用户输入）或 密码
-	返回值：
-		UserKey[string] – 用户登录后的会话ID。（用于后续功能调用）
-		NewUser[boolean] – 是否新注册用户
-		ValidityDate[date] – 登录会话有效日期。
-	"""
 	db = MySQL()
 
 	userId = None
@@ -134,19 +121,6 @@ def user_auth(data):
 
 
 def settings(data):
-	"""
-	更新用户设置
-	方法：
-		settings
-	参数：
-		UserKey[string] –用户登录后的会话ID。
-		Key[string] – 参数名
-		Value[string] – 参数值，可选参数，如果没有该参数，则返回指定参数名的当前值
-	返回值：
-		Error[long] – 发送成功返回0，否则返回非零值。
-		Key[string] – 参数名
-		Value[string] – 参数当前设置的值
-	"""
 	userId = user_id(data['UserKey'])
 	db = MySQL()
 	pass
