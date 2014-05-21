@@ -306,6 +306,7 @@ def space_authorized_resources(data):
 		prefixCountSQL = 'SELECT COUNT(*) AS c FROM `space_resource` WHERE `space_id` IN (%s)' % ', '.join(list(map(lambda x: '%s', spaceIds)))
 		prefixSelectSQL = 'SELECT * FROM `space_resource` WHERE `space_id` IN (%s)' % ', '.join(list(map(lambda x: '%s', spaceIds)))
 
+		db = MySQL()
 		resCount = db.get(prefixCountSQL + " AND `res_type`=%s", tuple(spaceIds) + (data.get('ResType', '')))['c']
 		resList = db.list(prefixSelectSQL + " AND `res_type`=%s", 
 							tuple(spaceIds) + (data.get('ResType', '')), sort='order_field%s'%sort, order='DESC' if order == 0 else 'ASC', offset=offset, pagesize=listMax)
