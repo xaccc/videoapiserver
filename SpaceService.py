@@ -282,6 +282,7 @@ def space_authorized_spaces(data):
 			})
 
 	return {
+		'Count': len(results),
 		'Results': results
 	}
 
@@ -293,7 +294,7 @@ def space_authorized_resources(data):
 		spaceIds.append(data.get('SpaceId'))
 	else:
 		ownerId = data.get('OwnerId', None)
-		for space in space_authorized_spaces(data):
+		for space in space_authorized_spaces(data)['Results']:
 			if space['OwnerId'] == ownerId:
 				spaceIds.append(space['Id'])
 
