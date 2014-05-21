@@ -177,9 +177,7 @@ def space_res_list(data):
 		resList = db.list("SELECT * FROM `space_resource` WHERE `space_id` = %s AND `res_type`=%s", 
 							(data.get('Id', ''), data.get('ResType', '')), sort='order_field%s'%sort, order='DESC' if order == 0 else 'ASC', offset=offset, pagesize=listMax )
 		results = []
-		print resList
 		for res in resList:
-			print "%s,%s" % (res['res_id'], res['order_field1'])
 			results.append({
 					'ResId': res['res_id'],
 					'OrderField1': res['order_field1'],
@@ -272,7 +270,7 @@ def space_authorized_spaces(data):
 	results=[]
 	for item in db.list("SELECT DISTINCT * FROM `space_authorize` WHERE `user_id`=%s", userId):
 		spaceInstance = space_get(item['space_id'])
-		spaceOwner = UserService.user_get(spaceInstance['user_id'], notRaise=True)
+		spaceOwner = UserService.user_get(spaceInstance['user_id'], True)
 		results.append({
 				'Id': spaceInstance['id'],
 				'Name': spaceInstance['name'],
