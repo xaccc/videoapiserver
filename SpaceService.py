@@ -272,12 +272,12 @@ def space_authorized_spaces(data):
 	results=[]
 	for item in db.list("SELECT DISTINCT * FROM `space_authorize` WHERE `user_id`=%s", userId):
 		spaceInstance = space_get(item['space_id'])
-		spaceOwner = UserService.user_get(item['user_id'], notRaise=True)
+		spaceOwner = UserService.user_get(spaceInstance['user_id'], notRaise=True)
 		results.append({
 				'Id': spaceInstance['id'],
 				'Name': spaceInstance['name'],
 				'Owner': spaceOwner['name'] if spaceOwner else None,
-				'OwnerId': item['user_id'],
+				'OwnerId': spaceInstance['user_id'],
 				'AllowEdit': item['allow_edit']
 			})
 
