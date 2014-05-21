@@ -281,7 +281,10 @@ def space_authorized_spaces(data):
 				'AllowEdit': item['allow_edit']
 			})
 
-	return results
+	return {
+		'Results': results
+	}
+
 
 
 def space_authorized_resources(data):

@@ -807,7 +807,7 @@ class APIHandler(tornado.web.RequestHandler):
 		参数：
 			UserKey[string] – 用户会话ID
 		返回值：
-			[Array] – 授权的对象列表：
+			Results[Array] – 授权的对象列表：
 				Id[string] – 空间唯一编号
 				Name[string] – 空间名称
 				Owner[string] – 空间所有者
